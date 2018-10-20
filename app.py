@@ -1,3 +1,4 @@
+import hashlib
 import json
 import random
 import os
@@ -11,8 +12,13 @@ app = flask.Flask(__name__)
 
 auth_secret = os.environ.get('AUTH_SECRET')
 auth_domain = os.environ.get('AUTH_DOMAIN', 'localhost')
+auth_info_file = os.environ.get('AUTH_INFO_FILE')
 
 assert auth_secret, 'You should pass secret via AUTH_SECRET environment variable'
+assert auth_info_file, 'You should pass auth file via AUTH_INFO_FILE environment variable'
+
+with open(auth_info_file) as fp:
+    auth_info_data = json.load(fp)
 
 
 @app.before_request
@@ -46,6 +52,18 @@ def login():
 
     if not login or not password:
         return flask.abort(flask.Response('No auth info', status=400))
+
+    expected_password_hash = auth_info_data.get(login)
+
+    if not expected_password_hash:
+        return flask.abort(flask.Response('Wrong login', status=403))
+
+    hasher = hashlib.sha512()
+    hasher.update(password.encode('utf-8'))
+    actual_password_hash = hasher.hexdigest()
+
+    if actual_password_hash != expected_password_hash:
+        return flask.abort(flask.Response('Wrong password', status=403))
 
     auth_token = jwt.encode({'login': login}, auth_secret)
     expires = datetime.now() + timedelta(days=30)
