@@ -8,13 +8,13 @@ body, .auth-form-input, .auth-form-control {
     font-size: 16px;
 }
 
-#auth-form-wrapper {
+#auth-form-wrapper, #user-panel-wrapper {
     position: absolute;
     top: 50vh;
     right: 50vw;
 }
 
-#auth-form {
+#auth-form, #user-panel {
     margin: -50% -50% 0 0;
     border: 1px solid rgb(105, 105, 126);
     border-radius: 3px;
@@ -35,12 +35,16 @@ body, .auth-form-input, .auth-form-control {
     border-radius: 3px;
 }
 
-#auth-form-submit {
+#auth-form-submit, .user-panel-control {
     background: rgb(111, 111, 126);
     color: white;
     border: 1px solid white;
     padding: 5px 10px;
     border-radius: 5px;
+}
+
+.user-panel-control {
+    margin-bottom: 20px;
 }
 
 #token-wrapper {

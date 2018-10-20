@@ -39,7 +39,7 @@ def csrf_protection():
 @app.route('/')
 def index():
     if is_authenticated():
-        return make_template_response('get-token-form.html')
+        return make_template_response('user-panel.html')
 
     return make_template_response('auth-form.html')
 
@@ -67,6 +67,21 @@ def login():
 
     auth_token = jwt.encode({'login': login}, auth_secret)
     expires = datetime.now() + timedelta(days=30)
+    domain = auth_domain if not app.debug else None
+
+    resp = flask.redirect(return_path, code=302)
+    resp.set_cookie('AUTH_TOKEN', auth_token, expires=expires,
+                    domain=domain, httponly=True, secure=not app.debug)
+
+    return make_response(resp)
+
+
+@app.route('/logout', methods=('POST',))
+def logout():
+    return_path = flask.request.form.get('returl_path', flask.url_for('index'))
+
+    auth_token = ''
+    expires = datetime.now() - timedelta(days=30)
     domain = auth_domain if not app.debug else None
 
     resp = flask.redirect(return_path, code=302)

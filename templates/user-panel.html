@@ -1,0 +1,17 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div id="user-panel-wrapper">
+    <div id="user-panel">
+        <form method="POST" id="get-token-form" action="{{ url_for('get_token') }}">
+            <button type="submit" class="user-panel-control" id="get-token-form-submit">Get my token</button>
+            <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
+        </form>
+
+        <form method="POST" id="logout-form" action="{{ url_for('logout') }}">
+            <button type="submit" class="user-panel-control" id="logout-form-submit">Log out</button>
+            <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
+        </form>
+    </div>
+</div>
+{% endblock %}
