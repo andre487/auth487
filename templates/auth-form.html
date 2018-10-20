@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+
+<head>
+    <title>Auth 487</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <div id="auth-form-wrapper">
+        <form method="POST" id="auth-form">
+            <input name="login" type="text" placeholder="Login" class="auth-form-input" id="auth-form-login">
+            <input name="password" type="password" placeholder="Password" class="auth-form-input" id="auth-form-password">
+            <button type="submit" class="auth-form-control" id="auth-form-submit">Auth</button>
+
+            <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
+        </form>
+    </div>
+</body>
