@@ -1,3 +1,4 @@
+import json
 import random
 import os
 import sys
@@ -19,6 +20,9 @@ def csrf_protection():
     if flask.request.method in {'GET', 'HEAD', 'OPTIONS'}:
         return
 
+    if flask.request.path == flask.url_for('get_auth_info'):
+        return
+
     expected_csrf_token = flask.request.cookies.get('CSRF_TOKEN')
     actual_csrf_token = flask.request.form.get('CSRF_TOKEN')
 
@@ -28,9 +32,10 @@ def csrf_protection():
 
 @app.route('/')
 def index():
-    return make_response(
-        flask.render_template('auth-form.html')
-    )
+    if is_authenticated():
+        return make_template_response('get-token-form.html')
+
+    return make_template_response('auth-form.html')
 
 
 @app.route('/login', methods=('POST',))
@@ -53,14 +58,59 @@ def login():
     return make_response(resp)
 
 
-def make_response(content):
-    resp = flask.make_response(content)
+@app.route('/get-auth-info', methods=('POST',))
+def get_auth_info():
+    auth_info = extract_auth_info(flask.request.form.get('auth-token'))
+    return json.dumps(auth_info)
+
+
+@app.route('/get-token', methods=('POST',))
+def get_token():
+    auth_token = flask.request.cookies.get('AUTH_TOKEN')
+    if not auth_token:
+        return flask.abort(flask.Response('No token', status=400))
+
+    return make_template_response('show-token.html', auth_token=auth_token)
+
+
+def is_authenticated():
+    auth_token = flask.request.cookies.get('AUTH_TOKEN')
+    if not auth_token:
+        return False
+
+    auth_info = extract_auth_info(auth_token)
+    return bool(auth_info)
+
+
+def extract_auth_info(auth_token=None):
+    if not auth_token:
+        auth_token = flask.request.cookies.get('AUTH_TOKEN')
+
+    try:
+        data = jwt.decode(auth_token, auth_secret)
+    except jwt.exceptions.DecodeError as e:
+        return flask.abort(flask.Response(str(e), status=403))
+
+    return data
+
+
+def make_template_response(template, **kwargs):
+    resp = make_response()
+    resp.response = flask.render_template(template, **kwargs)
+
+    return resp
+
+
+def make_response(base_resp=None):
+    if not base_resp:
+        base_resp = flask.Response()
 
     csrf_token = flask.request.cookies.get('CSRF_TOKEN')
     if not csrf_token:
         csrf_token = hex(random.randrange(0, sys.maxsize))
-        resp.set_cookie('CSRF_TOKEN', csrf_token,
-                        httponly=True, secure=not app.debug)
+        base_resp.set_cookie('CSRF_TOKEN', csrf_token,
+                             httponly=True, secure=not app.debug)
 
     app.jinja_env.globals['csrf_token'] = csrf_token
-    return resp
+
+    return base_resp
