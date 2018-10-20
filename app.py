@@ -1,14 +1,17 @@
 import random
 import os
 import sys
+from datetime import datetime, timedelta
 
 import flask
 import jwt
 
 app = flask.Flask(__name__)
-secret = os.environ.get('AUTH_SECRET')
 
-assert secret, 'You should pass secret via AUTH_SECRET environment variable'
+auth_secret = os.environ.get('AUTH_SECRET')
+auth_domain = os.environ.get('AUTH_DOMAIN', 'localhost')
+
+assert auth_secret, 'You should pass secret via AUTH_SECRET environment variable'
 
 
 @app.before_request
@@ -20,12 +23,34 @@ def csrf_protection():
     actual_csrf_token = flask.request.form.get('CSRF_TOKEN')
 
     if not expected_csrf_token or actual_csrf_token != expected_csrf_token:
-        flask.abort(403)
+        flask.abort(flask.Response('No CSRF token', status=403))
 
 
 @app.route('/')
 def index():
-    return make_response(flask.render_template('auth-form.html'))
+    return make_response(
+        flask.render_template('auth-form.html')
+    )
+
+
+@app.route('/login', methods=('POST',))
+def login():
+    login = flask.request.form.get('login')
+    password = flask.request.form.get('password')
+    return_path = flask.request.form.get('returl_path', flask.url_for('index'))
+
+    if not login or not password:
+        return flask.abort(flask.Response('No auth info', status=400))
+
+    auth_token = jwt.encode({'login': login}, auth_secret)
+    expires = datetime.now() + timedelta(days=30)
+    domain = auth_domain if not app.debug else None
+
+    resp = flask.redirect(return_path, code=302)
+    resp.set_cookie('AUTH_TOKEN', auth_token, expires=expires,
+                    domain=domain, httponly=True, secure=not app.debug)
+
+    return make_response(resp)
 
 
 def make_response(content):
