@@ -48,7 +48,7 @@ def index():
 def login():
     login = flask.request.form.get('login')
     password = flask.request.form.get('password')
-    return_path = flask.request.form.get('return_path', flask.url_for('index'))
+    return_path = flask.request.form.get('return-path', flask.url_for('index'))
 
     if not login or not password:
         return flask.abort(flask.Response('No auth info', status=400))
@@ -78,7 +78,7 @@ def login():
 
 @app.route('/logout', methods=('POST',))
 def logout():
-    return_path = flask.request.form.get('return_path', flask.url_for('index'))
+    return_path = flask.request.form.get('return-path', flask.url_for('index'))
 
     auth_token = ''
     expires = datetime.now() - timedelta(days=30)
