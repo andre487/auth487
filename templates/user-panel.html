@@ -10,6 +10,7 @@
 
         <form method="POST" id="logout-form" action="{{ url_for('logout') }}">
             <button type="submit" class="user-panel-control" id="logout-form-submit">Log out</button>
+            <input type="hidden" name="return-path" value="{{ return_path }}">
             <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
         </form>
     </div>

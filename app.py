@@ -38,17 +38,19 @@ def csrf_protection():
 
 @app.route('/')
 def index():
-    if is_authenticated():
-        return make_template_response('user-panel.html')
+    return_path = flask.request.args.get('return-path', flask.url_for('index'))
 
-    return make_template_response('auth-form.html')
+    if is_authenticated():
+        return make_template_response('user-panel.html', return_path=return_path)
+
+    return make_template_response('auth-form.html', return_path=return_path)
 
 
 @app.route('/login', methods=('POST',))
 def login():
     login = flask.request.form.get('login')
     password = flask.request.form.get('password')
-    return_path = flask.request.args.get('return-path', flask.url_for('index'))
+    return_path = flask.request.form.get('return-path', flask.url_for('index'))
 
     if not login or not password:
         return flask.abort(flask.Response('No auth info', status=400))
@@ -78,7 +80,7 @@ def login():
 
 @app.route('/logout', methods=('POST',))
 def logout():
-    return_path = flask.request.args.get('return-path', flask.url_for('index'))
+    return_path = flask.request.form.get('return-path', flask.url_for('index'))
 
     auth_token = ''
     expires = datetime.now() - timedelta(days=30)
@@ -129,7 +131,7 @@ def extract_auth_info(auth_token=None):
 
 def make_template_response(template, **kwargs):
     resp = make_response()
-    resp.response = flask.render_template(template, **kwargs)
+    resp.response.append(flask.render_template(template, **kwargs))
 
     return resp
 

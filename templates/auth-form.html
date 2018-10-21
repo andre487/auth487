@@ -7,6 +7,7 @@
             <input name="password" type="password" placeholder="Password" class="auth-form-input" id="auth-form-password" required>
             <button type="submit" class="auth-form-control" id="auth-form-submit">Auth</button>
 
+            <input type="hidden" name="return-path" value="{{ return_path }}">
             <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
         </form>
     </div>
