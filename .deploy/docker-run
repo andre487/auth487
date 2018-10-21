@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -e -o pipefail
+
+cur_dir="$(cd "$(dirname "$0")" && pwd)"
+project_dir="$cur_dir/.."
+
+docker run --rm --name auth487-server-test \
+    -e 'FLASK_DEBUG=1' \
+    -e 'AUTH_SECRET=487' \
+    -e 'AUTH_INFO_FILE=./test-auth-info.json' \
+    -p "127.0.0.1:5000:5000" \
+    -ti \
+    'andre487/auth487:latest'

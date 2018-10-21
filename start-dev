@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e -o pipefail
+
+cur_dir="$(cd "$(dirname "$0")" && pwd)"
+source "$cur_dir/.deploy/common.sh"
+"$dev_env/bin/flask" run
