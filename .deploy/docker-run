@@ -5,8 +5,10 @@ cur_dir="$(cd "$(dirname "$0")" && pwd)"
 project_dir="$cur_dir/.."
 
 docker run --rm --name auth487-server-test \
+    -v ~/.private/auth487/:/etc/auth487 \
     -e 'FLASK_DEBUG=1' \
-    -e 'AUTH_SECRET=487' \
+    -e 'AUTH_PRIVATE_KEY_FILE=/etc/auth487/private_key.pem' \
+    -e 'AUTH_PUBLIC_KEY_FILE=/etc/auth487/public_key.pem' \
     -e 'AUTH_INFO_FILE=./test-auth-info.json' \
     -p "127.0.0.1:5000:5000" \
     -ti \

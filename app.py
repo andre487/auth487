@@ -6,16 +6,27 @@ import sys
 from datetime import datetime, timedelta
 
 import flask
-import jwt
+from authlib.specs.rfc7519 import jwt
+from authlib.specs.rfc7515 import BadSignatureError
 
 app = flask.Flask(__name__)
 
-auth_secret = os.environ.get('AUTH_SECRET')
+private_key_file = os.environ.get('AUTH_PRIVATE_KEY_FILE')
+public_key_file = os.environ.get('AUTH_PUBLIC_KEY_FILE')
+
 auth_domain = os.environ.get('AUTH_DOMAIN', 'localhost')
 auth_info_file = os.environ.get('AUTH_INFO_FILE')
 
-assert auth_secret, 'You should pass secret via AUTH_SECRET environment variable'
+assert private_key_file, 'You should pass secret via AUTH_PRIVATE_KEY_FILE environment variable'
+assert public_key_file, 'You should pass secret via AUTH_PUBLIC_KEY_FILE environment variable'
+
 assert auth_info_file, 'You should pass auth file via AUTH_INFO_FILE environment variable'
+
+with open(private_key_file) as fp:
+    private_key = fp.read()
+
+with open(public_key_file) as fp:
+    public_key = fp.read()
 
 with open(auth_info_file) as fp:
     auth_info_data = json.load(fp)
@@ -67,13 +78,15 @@ def login():
     if actual_password_hash != expected_password_hash:
         return flask.abort(flask.Response('Wrong password', status=403))
 
-    auth_token = jwt.encode({'login': login}, auth_secret)
+    header = {'alg': 'RS256'}
+    payload = {'login': login}
+
+    auth_token = jwt.encode(header, payload, private_key)
     expires = datetime.now() + timedelta(days=30)
     domain = auth_domain if not app.debug else None
 
     resp = flask.redirect(return_path, code=302)
-    resp.set_cookie('AUTH_TOKEN', auth_token, expires=expires,
-                    domain=domain, httponly=True, secure=not app.debug)
+    resp.set_cookie('AUTH_TOKEN', auth_token, expires=expires, domain=domain, httponly=True, secure=not app.debug)
 
     return make_response(resp)
 
@@ -88,7 +101,7 @@ def logout():
 
     resp = flask.redirect(return_path, code=302)
     resp.set_cookie('AUTH_TOKEN', auth_token, expires=expires,
-                    domain=domain, httponly=True, secure=not app.debug)
+        domain=domain, httponly=True, secure=not app.debug)
 
     return make_response(resp)
 
@@ -97,6 +110,11 @@ def logout():
 def get_auth_info():
     auth_info = extract_auth_info(flask.request.form.get('auth-token'))
     return json.dumps(auth_info)
+
+
+@app.route('/get-public-key')
+def get_public_key():
+    return public_key
 
 
 @app.route('/get-token', methods=('POST',))
@@ -122,11 +140,11 @@ def extract_auth_info(auth_token=None):
         auth_token = flask.request.cookies.get('AUTH_TOKEN')
 
     try:
-        data = jwt.decode(auth_token, auth_secret)
-    except jwt.exceptions.DecodeError as e:
-        return flask.abort(flask.Response(str(e), status=403))
+        claims = jwt.decode(auth_token, public_key)
+    except BadSignatureError:
+        return False
 
-    return data
+    return dict(claims)
 
 
 def make_template_response(template, **kwargs):
@@ -144,7 +162,7 @@ def make_response(base_resp=None):
     if not csrf_token:
         csrf_token = hex(random.randrange(0, sys.maxsize))
         base_resp.set_cookie('CSRF_TOKEN', csrf_token,
-                             httponly=True, secure=not app.debug)
+            httponly=True, secure=not app.debug)
 
     app.jinja_env.globals['csrf_token'] = csrf_token
 
