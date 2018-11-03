@@ -1,14 +1,18 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-    <div id="auth-form-wrapper">
-        <form method="POST" id="auth-form" action="{{ url_for('login') }}">
-            <input name="login" type="text" placeholder="Login" class="auth-form-input" id="auth-form-login" required>
-            <input name="password" type="password" placeholder="Password" class="auth-form-input" id="auth-form-password" required>
-            <button type="submit" class="auth-form-control" id="auth-form-submit">Auth</button>
+    <form method="POST" class="form form_auth" action="{{ url_for('login') }}">
+        <input name="login" type="text" placeholder="Login" required
+               class="input auth-form__input auth-form__input_login">
+        <input name="password" type="password" placeholder="Password" required
+               class="input auth-form__input auth-form__input_password">
 
-            <input type="hidden" name="return-path" value="{{ return_path }}">
-            <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
-        </form>
-    </div>
+        <div class="button-wrapper">
+            <button type="submit"
+                    class="button auth-form__button auth-form__button_submit">Auth</button>
+        </div>
+
+        <input type="hidden" name="return-path" value="{{ return_path }}">
+        <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
+    </form>
 {% endblock %}
