@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
-set -e -o pipefail
+set -ex -o pipefail
 
 cur_dir="$(cd "$(dirname "$0")" && pwd)"
 source "$cur_dir/.deploy/common.sh"
+
+export AUTH_PRIVATE_KEY_FILE="$HOME/.private/auth487/private_key.pem"
+export AUTH_PUBLIC_KEY_FILE="$HOME/.private/auth487/public_key.pem"
+export AUTH_INFO_FILE="$cur_dir/test-auth-info.json"
+
 "$dev_env/bin/flask" run
