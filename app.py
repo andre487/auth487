@@ -142,7 +142,7 @@ def get_auth_info():
 @app.route('/get-public-key')
 @ath.protected_from_brute_force
 def get_public_key():
-    return flask.Response(PUBLIC_KEY, headers={'Content-Type': 'text.plain;charset=utf-8'})
+    return flask.Response(PUBLIC_KEY, headers={'Content-Type': 'text/plain; charset=utf-8'})
 
 
 @app.route('/get-token', methods=('POST',))
@@ -166,7 +166,7 @@ def make_template_response(template, **kwargs):
 
 def make_json_response(data):
     str_data = json.dumps(data, indent=2, ensure_ascii=False)
-    resp = flask.Response(response=str_data, headers={'Content-Type': 'application/json;charset=utf-8'})
+    resp = flask.Response(response=str_data, headers={'Content-Type': 'application/json; charset=utf-8'})
     return make_response(resp)
 
 

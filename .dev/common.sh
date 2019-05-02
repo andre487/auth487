@@ -12,3 +12,5 @@ export FLASK_DEBUG=1
 
 export DEV_PORT=5487
 export TEST_PORT=5489
+
+export AUTH_MONGO_DB_NAME=auth487_test

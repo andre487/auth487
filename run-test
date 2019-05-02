@@ -4,14 +4,26 @@ set -e -o pipefail
 cur_dir="$(cd "$(dirname "$0")" && pwd)"
 source "$cur_dir/.dev/common.sh"
 
+test_auth_token="$(cat "$cur_dir/.dev/test-auth-token.txt")"
+test_csrf_token="$(cat "$cur_dir/.dev/test-csrf-token.txt")"
+test_vars="{
+    'test_auth_token': '$test_auth_token',
+    'test_csrf_token': '$test_csrf_token',
+}"
+
 "$dev_env/bin/flask" run -p "$TEST_PORT" &
 server_pid="$!"
 sleep 1
 
+proc_status="$(ps "$server_pid")"
+if [[ -z "$proc_status" ]]; then
+    exit 1
+fi
+
 "$dev_env/bin/python" "$cur_dir/.dev/manage-db.py" setup
 
 set +e
-"$dev_env/bin/pyresttest" "http://127.0.0.1:$TEST_PORT" endpoint-specs.yml
+"$dev_env/bin/pyresttest" "http://127.0.0.1:$TEST_PORT" endpoint-specs.yml --vars="$test_vars"
 result="$?"
 set -e
 

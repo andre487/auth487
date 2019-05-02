@@ -1,6 +1,5 @@
 {
   "remote_addresses": [
-    {"remote_addr": "8.8.8.8", "mistakes": 1},
-    {"remote_addr": "127.0.0.1", "mistakes": 4}
+    {"remote_addr": "8.8.8.8", "mistakes": 1}
   ]
 }
