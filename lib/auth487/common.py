@@ -1,4 +1,6 @@
 import os
+from datetime import datetime
+from urllib import request
 
 from authlib.jose import jwt
 from authlib.jose.errors import BadSignatureError, DecodeError
@@ -20,6 +22,24 @@ PUBLIC_KEY = None
 if PUBLIC_KEY_FILE:
     with open(PUBLIC_KEY_FILE) as fp:
         PUBLIC_KEY = fp.read()
+
+PUBLIC_KEY_CACHE_TIME = 300
+
+_public_key_cache = None
+_public_key_time = 0
+
+
+def download_public_key():
+    global _public_key_cache, _public_key_time
+
+    now = datetime.utcnow().timestamp()
+    if now - _public_key_time <= PUBLIC_KEY_CACHE_TIME:
+        return _public_key_cache
+
+    _public_key_cache = request.urlopen(AUTH_DOMAIN + '/get-public-key').read()
+    _public_key_time = now
+
+    return _public_key_cache
 
 
 def extract_auth_info(auth_token):
