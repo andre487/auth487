@@ -151,7 +151,12 @@ def make_response(base_resp=None):
     if not base_resp:
         base_resp = flask.Response()
 
-    base_resp.headers['Content-Security-Policy'] = "default-src 'self';"
+    base_resp.headers['Content-Security-Policy'] = (
+        "default-src 'none'; "
+        "style-src 'self'; "
+        "script-src 'self'; "
+        "img-src 'self';"
+    )
     app.jinja_env.globals['csrf_token'] = ath.set_csrf_token(app, resp=base_resp)
 
     return base_resp
