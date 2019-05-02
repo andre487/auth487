@@ -18,7 +18,7 @@ docker run -d --rm --name auth487-test --link dev-mongo \
     -e 'FLASK_ENV=dev' \
     -e 'FLASK_DEBUG=1' \
     -e 'MONGO_HOST=dev-mongo' \
-    -e "AUTH_MONGO_DB_NAME=$AUTH_MONGO_DB_NAME"\
+    -e "AUTH_MONGO_DB_NAME=$AUTH_MONGO_DB_NAME" \
     -p "127.0.0.1:$web_port:5000" \
     -ti \
     'andre487/auth487:latest' > /dev/null

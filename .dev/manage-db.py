@@ -9,7 +9,7 @@ MONGO_HOST = os.environ.get('MONGO_HOST', 'localhost')
 MONGO_PORT = int(os.environ.get('MONGO_PORT', 27017))
 MONGO_LOGIN = os.environ.get('MONGO_LOGIN')
 MONGO_PASSWORD = os.environ.get('MONGO_PASSWORD')
-MONGO_DB_NAME = os.environ.get('MONGO_DB_NAME', 'auth487_test')
+MONGO_DB_NAME = os.environ.get('AUTH_MONGO_DB_NAME', 'auth487_docker_test')
 
 logging.basicConfig(level=logging.INFO)
 

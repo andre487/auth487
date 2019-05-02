@@ -6,6 +6,7 @@
   vars:
     container_name: auth487
     network_name: auth487_net
+    mongo_name: common-mongo
     service_port: 10400
 
   tasks:
@@ -72,6 +73,9 @@
     - name: Create docker network for all services
       shell: docker network create --driver bridge '{{ network_name }}' || true
 
+    - name: Connect MongoDB to network
+      shell: docker network connect '{{ network_name }}' '{{ mongo_name }}' || true
+
     - name: Create auth data dir
       file:
         state: directory
@@ -107,7 +111,8 @@
           --restart always \
           --network {{ network_name }} \
           --name {{ container_name }} \
-          -v /etc/auth487:/etc/auth487 \
+          -v "/etc/auth487:/etc/auth487" \
+          -e "MONGO_HOST={{ mongo_name }}" \
           -e "AUTH_PRIVATE_KEY_FILE=/etc/auth487/private_key.pem" \
           -e "AUTH_PUBLIC_KEY_FILE=/etc/auth487/public_key.pem" \
           -e "AUTH_DOMAIN={{ auth_domain }}" \
