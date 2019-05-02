@@ -115,7 +115,7 @@ def get_auth_info():
 
 @app.route('/get-public-key')
 def get_public_key():
-    return PUBLIC_KEY
+    return flask.Response(PUBLIC_KEY, headers={'Content-Type': 'text.plain;charset=utf-8'})
 
 
 @app.route('/get-token', methods=('POST',))
