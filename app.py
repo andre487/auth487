@@ -96,6 +96,7 @@ def login():
 
 
 @app.route('/logout', methods=('POST',))
+@ath.protected_from_brute_force
 def logout():
     return_path = flask.request.form.get('return-path', flask.url_for('index'))
 
@@ -129,6 +130,7 @@ def get_auth_info():
 
 
 @app.route('/get-public-key')
+@ath.protected_from_brute_force
 def get_public_key():
     return flask.Response(PUBLIC_KEY, headers={'Content-Type': 'text.plain;charset=utf-8'})
 
