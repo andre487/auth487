@@ -4,12 +4,17 @@ set -e -o pipefail
 cur_dir="$(cd "$(dirname "$0")" && pwd)"
 project_dir="$cur_dir/.."
 
-docker run --rm --name auth487-server-test \
+docker run --rm --name auth487-server-test --link dev-mongo \
     -v ~/.private/auth487/:/etc/auth487 \
+    -v "$HOME/.private:/usr/local/private" \
+    -v "$project_dir/.dev:/usr/local/dev" \
+    -e 'AUTH_PRIVATE_KEY_FILE=/usr/local/private/auth487/private_key.pem' \
+    -e 'AUTH_PUBLIC_KEY_FILE=/usr/local/private/auth487/public_key.pem' \
+    -e 'AUTH_INFO_FILE=/usr/local/dev/test-auth-info.json' \
+    -e 'FLASK_APP=app.py' \
+    -e 'FLASK_ENV=dev' \
     -e 'FLASK_DEBUG=1' \
-    -e 'AUTH_PRIVATE_KEY_FILE=/etc/auth487/private_key.pem' \
-    -e 'AUTH_PUBLIC_KEY_FILE=/etc/auth487/public_key.pem' \
-    -e 'AUTH_INFO_FILE=./test-auth-info.json' \
+    -e 'MONGO_HOST=dev-mongo' \
     -p "127.0.0.1:5000:5000" \
     -ti \
     'andre487/auth487:latest'

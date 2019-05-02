@@ -15,7 +15,7 @@
 - test:
     - name: Index page – Auth
     - url: /
-    - headers:  {template: {'cookie': 'AUTH_TOKEN=$test_auth_token'}}
+    - headers:  {template: {cookie: 'AUTH_TOKEN=$test_auth_token'}}
     - expected_status: 200
     - validators:
         - compare: {header: 'content-type', expected: 'text/html; charset=utf-8'}
@@ -134,7 +134,7 @@
 - test:
     - name: Get auth info
     - url: /get-auth-info
-    - headers:  {template: {'cookie': 'AUTH_TOKEN=$test_auth_token'}}
+    - headers:  {template: {cookie: 'AUTH_TOKEN=$test_auth_token'}}
     - expected_status: 200
     - validators:
         - compare: {header: 'content-type', expected: 'application/json; charset=utf-8'}
