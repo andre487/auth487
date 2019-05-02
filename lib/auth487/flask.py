@@ -73,14 +73,12 @@ def protected_from_brute_force(route_func):
     return wrapped_route
 
 
-def require_auth(return_path=None):
+def require_auth(auth_path=AUTH_DOMAIN, return_path='/', no_redirect=False):
+    assert auth_path, 'You should provide auth path via AUTH_DOMAIN var or via argument'
+
     def require_auth_decorator(route_func):
         @wraps(route_func)
         def wrapped_route(*args, **kwargs):
-            nonlocal return_path
-            if return_path is None:
-                return_path = AUTH_DOMAIN if AUTH_DOMAIN else flask.url_for('index')
-
             # noinspection PyArgumentList
             if has_credentials() and not is_authenticated():
                 return flask.Response(
@@ -90,7 +88,14 @@ def require_auth(return_path=None):
 
             # noinspection PyArgumentList
             if not is_authenticated():
-                return flask.redirect(return_path, code=302)
+                if no_redirect:
+                    return flask.Response(
+                        '{"error": "Auth error"}', status=403,
+                        headers={'Content-Type': 'application/json'},
+                    )
+
+                auth_url = auth_path + ('&' if '?' in auth_path else '&') + 'return-path=' + flask.url_for(return_path)
+                return flask.redirect(auth_url, code=302)
 
             return route_func(*args, **kwargs)
 
