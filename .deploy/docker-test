@@ -14,6 +14,7 @@ docker run -d --rm --name auth487-test --link dev-mongo \
     -e 'AUTH_PRIVATE_KEY_FILE=/usr/local/private/auth487/private_key.pem' \
     -e 'AUTH_PUBLIC_KEY_FILE=/usr/local/private/auth487/public_key.pem' \
     -e 'AUTH_INFO_FILE=/usr/local/dev/test-auth-info.json' \
+    -e "AUTH_DOMAIN=http://localhost:$web_port" \
     -e 'FLASK_APP=app.py' \
     -e 'FLASK_ENV=dev' \
     -e 'FLASK_DEBUG=1' \
@@ -30,6 +31,7 @@ test_csrf_token="$(cat "$project_dir/.dev/test-csrf-token.txt")"
 test_vars="{
     'test_auth_token': '$test_auth_token',
     'test_csrf_token': '$test_csrf_token',
+    'test_port': '$web_port',
 }"
 
 "$dev_env/bin/python" "$project_dir/.dev/manage-db.py" setup

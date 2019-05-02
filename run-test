@@ -4,11 +4,14 @@ set -e -o pipefail
 cur_dir="$(cd "$(dirname "$0")" && pwd)"
 source "$cur_dir/.dev/common.sh"
 
+export AUTH_DOMAIN="http://localhost:$TEST_PORT"
+
 test_auth_token="$(cat "$cur_dir/.dev/test-auth-token.txt")"
 test_csrf_token="$(cat "$cur_dir/.dev/test-csrf-token.txt")"
 test_vars="{
     'test_auth_token': '$test_auth_token',
     'test_csrf_token': '$test_csrf_token',
+    'test_port': '$TEST_PORT',
 }"
 
 "$dev_env/bin/flask" run -p "$TEST_PORT" &
