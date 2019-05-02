@@ -1,60 +1,39 @@
 import hashlib
 import json
-import random
 import os
-import sys
 from datetime import datetime, timedelta
 
 import flask
 from authlib.specs.rfc7519 import jwt
-from authlib.specs.rfc7515 import BadSignatureError
+from lib.auth487 import flask as ath
+
+AUTH_INFO_FILE = os.environ.get('AUTH_INFO_FILE')
+
+PRIVATE_KEY = ath.PRIVATE_KEY
+PUBLIC_KEY = ath.PUBLIC_KEY
+
+assert PRIVATE_KEY, 'You should pass existing secret via AUTH_PRIVATE_KEY_FILE environment variable'
+assert PUBLIC_KEY, 'You should pass existing secret via AUTH_PUBLIC_KEY_FILE environment variable'
+
+assert AUTH_INFO_FILE, 'You should pass auth file via AUTH_INFO_FILE environment variable'
+
+with open(AUTH_INFO_FILE) as fp:
+    AUTH_INFO_DATA = json.load(fp)
 
 app = flask.Flask(__name__)
 
-private_key_file = os.environ.get('AUTH_PRIVATE_KEY_FILE')
-public_key_file = os.environ.get('AUTH_PUBLIC_KEY_FILE')
-
-auth_domain = os.environ.get('AUTH_DOMAIN', 'localhost')
-auth_info_file = os.environ.get('AUTH_INFO_FILE')
-
-assert private_key_file, 'You should pass secret via AUTH_PRIVATE_KEY_FILE environment variable'
-assert public_key_file, 'You should pass secret via AUTH_PUBLIC_KEY_FILE environment variable'
-
-assert auth_info_file, 'You should pass auth file via AUTH_INFO_FILE environment variable'
-
-with open(private_key_file) as fp:
-    private_key = fp.read()
-
-with open(public_key_file) as fp:
-    public_key = fp.read()
-
-with open(auth_info_file) as fp:
-    auth_info_data = json.load(fp)
-
 
 @app.before_request
-def csrf_protection():
-    if flask.request.method in {'GET', 'HEAD', 'OPTIONS'}:
-        app.logger.warn('CSRF: wrong method')
-        return
-
-    if flask.request.path == flask.url_for('get_auth_info'):
-        app.logger.info('CSRF: visit get_auth_info')
-        return
-
-    expected_csrf_token = flask.request.cookies.get('CSRF_TOKEN')
-    actual_csrf_token = flask.request.form.get('CSRF_TOKEN')
-
-    if not expected_csrf_token or actual_csrf_token != expected_csrf_token:
-        app.logger.info('CSRF: no token')
-        flask.abort(flask.Response('No CSRF token', status=403))
+def before_request():
+    ath.check_csrf_token(app)
 
 
 @app.route('/')
 def index():
     return_path = flask.request.args.get('return-path', flask.url_for('index'))
 
-    if is_authenticated():
+    # noinspection PyArgumentList
+    if ath.is_authenticated():
         app.logger.info('AUTH: OK')
         return make_template_response('user-panel.html', return_path=return_path)
 
@@ -72,7 +51,7 @@ def login():
         app.logger.info('LOGIN: no auth info')
         return flask.abort(flask.Response('No auth info', status=400))
 
-    expected_password_hash = auth_info_data.get(login)
+    expected_password_hash = AUTH_INFO_DATA.get(login)
 
     if not expected_password_hash:
         app.logger.info('LOGIN: wrong login')
@@ -89,12 +68,15 @@ def login():
     header = {'alg': 'RS256'}
     payload = {'login': login}
 
-    auth_token = jwt.encode(header, payload, private_key)
+    auth_token = jwt.encode(header, payload, PRIVATE_KEY)
     expires = datetime.now() + timedelta(days=30)
-    domain = auth_domain if not app.debug else None
+    domain = None if app.debug else ath.AUTH_DOMAIN
 
     resp = flask.redirect(return_path, code=302)
-    resp.set_cookie('AUTH_TOKEN', auth_token, expires=expires, domain=domain, httponly=True, secure=not app.debug)
+    resp.set_cookie(
+        ath.AUTH_COOKIE_NAME, auth_token, expires=expires,
+        domain=domain, httponly=True, secure=not app.debug,
+    )
 
     app.logger.info('LOGIN: OK')
     return make_response(resp)
@@ -106,56 +88,44 @@ def logout():
 
     auth_token = ''
     expires = datetime.now() - timedelta(days=30)
-    domain = auth_domain if not app.debug else None
+    domain = None if app.debug else ath.AUTH_DOMAIN
 
     resp = flask.redirect(return_path, code=302)
-    resp.set_cookie('AUTH_TOKEN', auth_token, expires=expires,
-        domain=domain, httponly=True, secure=not app.debug)
+    resp.set_cookie(
+        ath.AUTH_COOKIE_NAME, auth_token, expires=expires,
+        domain=domain, httponly=True, secure=not app.debug,
+    )
 
     app.logger.info('LOGOUT: OK')
     return make_response(resp)
 
 
-@app.route('/get-auth-info', methods=('POST',))
+@app.route('/get-auth-info')
 def get_auth_info():
-    auth_info = extract_auth_info(flask.request.form.get('auth-token'))
-    return json.dumps(auth_info)
+    auth_token = flask.request.args.get('auth-token')
+    if not auth_token:
+        auth_token = ath.get_auth_token()
+
+    if not auth_token:
+        return flask.abort(flask.Response('No token', status=400))
+
+    auth_info = ath.extract_auth_info(auth_token)
+    return make_json_response(auth_info)
 
 
 @app.route('/get-public-key')
 def get_public_key():
-    return public_key
+    return PUBLIC_KEY
 
 
 @app.route('/get-token', methods=('POST',))
 def get_token():
-    auth_token = flask.request.cookies.get('AUTH_TOKEN')
+    auth_token = ath.get_auth_token()
     if not auth_token:
         app.logger.info('GET TOKEN: no token')
         return flask.abort(flask.Response('No token', status=400))
 
     return make_template_response('show-token.html', auth_token=auth_token)
-
-
-def is_authenticated():
-    auth_token = flask.request.cookies.get('AUTH_TOKEN')
-    if not auth_token:
-        return False
-
-    auth_info = extract_auth_info(auth_token)
-    return bool(auth_info)
-
-
-def extract_auth_info(auth_token=None):
-    if not auth_token:
-        auth_token = flask.request.cookies.get('AUTH_TOKEN')
-
-    try:
-        claims = jwt.decode(auth_token, public_key)
-    except BadSignatureError:
-        return False
-
-    return dict(claims)
 
 
 def make_template_response(template, **kwargs):
@@ -165,18 +135,17 @@ def make_template_response(template, **kwargs):
     return resp
 
 
+def make_json_response(data):
+    str_data = json.dumps(data, indent=2, ensure_ascii=False)
+    resp = flask.Response(response=str_data, headers={'Content-Type': 'application/json;charset=utf-8'})
+    return make_response(resp)
+
+
 def make_response(base_resp=None):
     if not base_resp:
         base_resp = flask.Response()
 
-    csrf_token = flask.request.cookies.get('CSRF_TOKEN')
-    if not csrf_token:
-        csrf_token = hex(random.randrange(0, sys.maxsize))
-        base_resp.set_cookie('CSRF_TOKEN', csrf_token,
-            httponly=True, secure=not app.debug)
-
     base_resp.headers['Content-Security-Policy'] = "default-src 'self';"
-
-    app.jinja_env.globals['csrf_token'] = csrf_token
+    app.jinja_env.globals['csrf_token'] = ath.set_csrf_token(app, resp=base_resp)
 
     return base_resp

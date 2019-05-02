@@ -7,6 +7,11 @@
             <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
         </form>
 
+        <form class="form user-panel_form" action="{{ url_for('get_auth_info') }}">
+            <button type="submit" class="button button_get-auth-info">Get my auth info</button>
+            <input type="hidden" name="auth-token" value="{{ auth_token }}">
+        </form>
+
         <form method="POST" class="form user-panel_form" action="{{ url_for('logout') }}">
             <button type="submit" class="button button_logout">Log out</button>
 
