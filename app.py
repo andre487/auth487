@@ -147,7 +147,7 @@ def get_public_key():
 
 @app.route('/get-token', methods=('POST',))
 @ath.protected_from_brute_force
-@ath.require_auth()
+@ath.require_auth(return_route='get_token')
 def get_token():
     auth_token = ath.get_auth_token()
     if not auth_token:

@@ -2,6 +2,7 @@ import logging
 import random
 import sys
 from functools import partial, wraps
+from urllib.parse import quote
 
 from .data_handler import is_remote_addr_clean, mark_auth_mistake
 from .common import *
@@ -73,7 +74,7 @@ def protected_from_brute_force(route_func):
     return wrapped_route
 
 
-def require_auth(auth_path=AUTH_DOMAIN, return_path='/', no_redirect=False):
+def require_auth(auth_path=AUTH_DOMAIN, return_route='index', no_redirect=False):
     assert auth_path, 'You should provide auth path via AUTH_DOMAIN var or via argument'
 
     def require_auth_decorator(route_func):
@@ -94,7 +95,12 @@ def require_auth(auth_path=AUTH_DOMAIN, return_path='/', no_redirect=False):
                         headers={'Content-Type': 'application/json'},
                     )
 
-                auth_url = auth_path + ('&' if '?' in auth_path else '&') + 'return-path=' + flask.url_for(return_path)
+                auth_url = (
+                        auth_path +
+                        ('&' if '?' in auth_path else '?') +
+                        'return-path=' +
+                        quote(flask.url_for(return_route))
+                )
                 return flask.redirect(auth_url, code=302)
 
             return route_func(*args, **kwargs)
