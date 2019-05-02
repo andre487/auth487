@@ -11,7 +11,7 @@ setuptools.setup(
     url='https://github.com/andre487/auth487',
     packages=setuptools.find_packages(),
     install_requires=(
-        'Authlib==0.10',
+        'Authlib==0.11',
     ),
     classifiers=(
         'Programming Language :: Python :: 3',
