@@ -1,8 +1,8 @@
 import logging
 import random
 import sys
+import urllib.parse
 from functools import partial, wraps
-from urllib.parse import quote
 
 from .data_handler import is_remote_addr_clean, mark_auth_mistake
 from .common import *
@@ -99,11 +99,20 @@ def require_auth(auth_path=AUTH_DOMAIN, return_route=None, no_redirect=False):
                         headers={'Content-Type': 'application/json'},
                     )
 
+                url_root = flask.request.url_root
+                if url_root.endswith('/'):
+                    url_root = url_root[:-1]
+
+                return_url = urllib.parse.quote(
+                    url_root +
+                    flask.url_for(return_route)
+                )
+
                 auth_url = (
                         auth_path +
                         ('&' if '?' in auth_path else '?') +
                         'return-path=' +
-                        quote(flask.url_for(return_route))
+                        return_url
                 )
                 return flask.redirect(auth_url, code=302)
 

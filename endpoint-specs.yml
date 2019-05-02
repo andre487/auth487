@@ -175,5 +175,5 @@
     - expected_status: 302
     - validators:
         - compare: {header: 'content-type', expected: 'text/html; charset=utf-8'}
-        - compare: {header: 'location', expected: 'http://localhost:5487?return-path=/get-token'}
+        - compare: {header: 'location', expected: 'http://localhost:5487?return-path=http%3A//127.0.0.1%3A5489/get-token'}
         - compare: {raw_body: '', comparator: 'contains', expected: 'Redirecting...'}
