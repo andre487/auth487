@@ -29,6 +29,13 @@ _public_key_cache = None
 _public_key_time = 0
 
 
+def get_public_key():
+    if PUBLIC_KEY is not None:
+        return PUBLIC_KEY
+
+    return download_public_key()
+
+
 def download_public_key():
     global _public_key_cache, _public_key_time
 
@@ -44,7 +51,7 @@ def download_public_key():
 
 def extract_auth_info(auth_token):
     try:
-        claims = jwt.decode(auth_token, PUBLIC_KEY)
+        claims = jwt.decode(auth_token, get_public_key())
     except (BadSignatureError, DecodeError):
         return None
 
