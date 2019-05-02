@@ -73,5 +73,31 @@ def protected_from_brute_force(route_func):
     return wrapped_route
 
 
+def require_auth(return_path=None):
+    def require_auth_decorator(route_func):
+        @wraps(route_func)
+        def wrapped_route(*args, **kwargs):
+            nonlocal return_path
+            if return_path is None:
+                return_path = AUTH_DOMAIN if AUTH_DOMAIN else flask.url_for('index')
+
+            # noinspection PyArgumentList
+            if has_credentials() and not is_authenticated():
+                return flask.Response(
+                    '{"error": "Wrong credentials"}', status=403,
+                    headers={'Content-Type': 'application/json'},
+                )
+
+            # noinspection PyArgumentList
+            if not is_authenticated():
+                return flask.redirect(return_path, code=302)
+
+            return route_func(*args, **kwargs)
+
+        return wrapped_route
+
+    return require_auth_decorator
+
+
 has_credentials = partial(has_credentials, get_auth_token)
 is_authenticated = partial(is_authenticated, get_auth_token)

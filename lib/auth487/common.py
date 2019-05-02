@@ -1,7 +1,7 @@
 import os
 
 from authlib.jose import jwt
-from authlib.jose.errors import BadSignatureError
+from authlib.jose.errors import BadSignatureError, DecodeError
 
 AUTH_COOKIE_NAME = 'AUTH_TOKEN'
 CSRF_COOKIE_NAME = 'CSRF_TOKEN'
@@ -25,7 +25,7 @@ if PUBLIC_KEY_FILE:
 def extract_auth_info(auth_token):
     try:
         claims = jwt.decode(auth_token, PUBLIC_KEY)
-    except BadSignatureError:
+    except (BadSignatureError, DecodeError):
         return None
 
     return dict(claims)

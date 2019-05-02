@@ -1,5 +1,6 @@
 import hashlib
 import json
+import logging
 import os
 from datetime import datetime, timedelta
 
@@ -19,6 +20,12 @@ assert AUTH_INFO_FILE, 'You should pass auth file via AUTH_INFO_FILE environment
 
 with open(AUTH_INFO_FILE) as fp:
     AUTH_INFO_DATA = json.load(fp)
+
+# noinspection SpellCheckingInspection
+LOG_FORMAT = '%(asctime)s %(levelname)s\t%(message)s\t%(pathname)s:%(lineno)d %(funcName)s %(process)d %(threadName)s'
+LOG_LEVEL = os.environ.get('LOG_LEVEL', logging.INFO)
+
+logging.basicConfig(format=LOG_FORMAT, level=LOG_LEVEL)
 
 app = flask.Flask(__name__)
 
@@ -107,6 +114,8 @@ def logout():
 
 
 @app.route('/get-auth-info')
+@ath.protected_from_brute_force
+@ath.require_auth()
 def get_auth_info():
     auth_token = flask.request.args.get('auth-token')
     if not auth_token:
@@ -125,6 +134,8 @@ def get_public_key():
 
 
 @app.route('/get-token', methods=('POST',))
+@ath.protected_from_brute_force
+@ath.require_auth()
 def get_token():
     auth_token = ath.get_auth_token()
     if not auth_token:
