@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -e -o pipefail
+
+cur_dir="$(cd "$(dirname "$0")" && pwd)"
+source "$cur_dir/.dev/common.sh"
+
+"$dev_env/bin/flask" run -p "$TEST_PORT" &
+server_pid="$!"
+sleep 1
+
+"$dev_env/bin/python" "$cur_dir/.dev/manage-db.py" setup
+
+set +e
+"$dev_env/bin/pyresttest" "http://127.0.0.1:$TEST_PORT" endpoint-specs.yml
+result="$?"
+set -e
+
+kill "$server_pid"
+"$dev_env/bin/python" "$cur_dir/.dev/manage-db.py" tear-down
+
+exit "$result"

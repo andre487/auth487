@@ -2,11 +2,6 @@
 set -ex -o pipefail
 
 cur_dir="$(cd "$(dirname "$0")" && pwd)"
-source "$cur_dir/.deploy/common.sh"
+source "$cur_dir/.dev/common.sh"
 
-export AUTH_PRIVATE_KEY_FILE="$HOME/.private/auth487/private_key.pem"
-export AUTH_PUBLIC_KEY_FILE="$HOME/.private/auth487/public_key.pem"
-export AUTH_INFO_FILE="$cur_dir/test-auth-info.json"
-export FLASK_ENV=dev
-
-"$dev_env/bin/flask" run -p 5487
+"$dev_env/bin/flask" run -p "$DEV_PORT"

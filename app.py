@@ -25,6 +25,16 @@ with open(AUTH_INFO_FILE) as fp:
 LOG_FORMAT = '%(asctime)s %(levelname)s\t%(message)s\t%(pathname)s:%(lineno)d %(funcName)s %(process)d %(threadName)s'
 LOG_LEVEL = os.environ.get('LOG_LEVEL', logging.INFO)
 
+ADDITIONAL_HEADERS = {
+    'Content-Security-Policy': (
+        "default-src 'none'; "
+        "style-src 'self'; "
+        "script-src 'self'; "
+        "img-src 'self';"
+    ),
+    'X-Frame-Options': 'deny'
+}
+
 logging.basicConfig(format=LOG_FORMAT, level=LOG_LEVEL)
 
 app = flask.Flask(__name__)
@@ -164,12 +174,9 @@ def make_response(base_resp=None):
     if not base_resp:
         base_resp = flask.Response()
 
-    base_resp.headers['Content-Security-Policy'] = (
-        "default-src 'none'; "
-        "style-src 'self'; "
-        "script-src 'self'; "
-        "img-src 'self';"
-    )
+    for name, val in ADDITIONAL_HEADERS.items():
+        base_resp.headers[name] = val
+
     app.jinja_env.globals['csrf_token'] = ath.set_csrf_token(app, resp=base_resp)
 
     return base_resp
