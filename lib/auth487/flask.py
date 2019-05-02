@@ -74,10 +74,14 @@ def protected_from_brute_force(route_func):
     return wrapped_route
 
 
-def require_auth(auth_path=AUTH_DOMAIN, return_route='index', no_redirect=False):
+def require_auth(auth_path=AUTH_DOMAIN, return_route=None, no_redirect=False):
     assert auth_path, 'You should provide auth path via AUTH_DOMAIN var or via argument'
 
     def require_auth_decorator(route_func):
+        nonlocal return_route
+        if return_route is None:
+            return_route = route_func.__name__
+
         @wraps(route_func)
         def wrapped_route(*args, **kwargs):
             # noinspection PyArgumentList
