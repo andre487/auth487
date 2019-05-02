@@ -175,6 +175,8 @@ def make_response(base_resp=None):
         base_resp.set_cookie('CSRF_TOKEN', csrf_token,
             httponly=True, secure=not app.debug)
 
+    base_resp.headers['Content-Security-Policy'] = "default-src 'self';"
+
     app.jinja_env.globals['csrf_token'] = csrf_token
 
     return base_resp
