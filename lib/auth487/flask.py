@@ -1,8 +1,9 @@
 import logging
 import random
 import sys
-from functools import partial
+from functools import partial, wraps
 
+from .data_handler import is_remote_addr_clean, mark_auth_mistake
 from .common import *
 
 try:
@@ -49,4 +50,28 @@ def check_csrf_token(app, api_urls=()):
         flask.abort(flask.Response('No CSRF token', status=403))
 
 
+def protected_from_brute_force(route_func):
+    @wraps(route_func)
+    def wrapped_route(*args, **kwargs):
+        remote_addr = flask.request.remote_addr
+        if not is_remote_addr_clean(remote_addr):
+            logging.info('Addr %s is not clean, so ban', remote_addr)
+            mark_auth_mistake(remote_addr)
+
+            return flask.Response(
+                '{"error": "Banned"}', status=403,
+                headers={'Content-Type': 'application/json'},
+            )
+
+        result = route_func(*args, **kwargs)
+        if result.status.startswith('403'):
+            logging.info('Addr %s has auth mistake: %s', remote_addr, result.status)
+            mark_auth_mistake(remote_addr)
+
+        return result
+
+    return wrapped_route
+
+
+has_credentials = partial(has_credentials, get_auth_token)
 is_authenticated = partial(is_authenticated, get_auth_token)

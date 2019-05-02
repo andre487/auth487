@@ -4,7 +4,7 @@ import os
 from datetime import datetime, timedelta
 
 import flask
-from authlib.specs.rfc7519 import jwt
+from authlib.jose import jwt
 from lib.auth487 import flask as ath
 
 AUTH_INFO_FILE = os.environ.get('AUTH_INFO_FILE')
@@ -29,8 +29,13 @@ def before_request():
 
 
 @app.route('/')
+@ath.protected_from_brute_force
 def index():
     return_path = flask.request.args.get('return-path', flask.url_for('index'))
+
+    # noinspection PyArgumentList
+    if ath.has_credentials() and not ath.is_authenticated():
+        return flask.Response('Wrong credentials', status=403)
 
     # noinspection PyArgumentList
     if ath.is_authenticated():
@@ -42,6 +47,7 @@ def index():
 
 
 @app.route('/login', methods=('POST',))
+@ath.protected_from_brute_force
 def login():
     login = flask.request.form.get('login')
     password = flask.request.form.get('password')
@@ -49,13 +55,13 @@ def login():
 
     if not login or not password:
         app.logger.info('LOGIN: no auth info')
-        return flask.abort(flask.Response('No auth info', status=400))
+        return flask.Response('No auth info', status=400)
 
     expected_password_hash = AUTH_INFO_DATA.get(login)
 
     if not expected_password_hash:
         app.logger.info('LOGIN: wrong login')
-        return flask.abort(flask.Response('Wrong login', status=403))
+        return flask.Response('Wrong login', status=403)
 
     hasher = hashlib.sha512()
     hasher.update(password.encode('utf-8'))
@@ -63,7 +69,7 @@ def login():
 
     if actual_password_hash != expected_password_hash:
         app.logger.info('LOGIN: wrong password')
-        return flask.abort(flask.Response('Wrong password', status=403))
+        return flask.Response('Wrong password', status=403)
 
     header = {'alg': 'RS256'}
     payload = {'login': login}
@@ -107,7 +113,7 @@ def get_auth_info():
         auth_token = ath.get_auth_token()
 
     if not auth_token:
-        return flask.abort(flask.Response('No token', status=400))
+        return flask.Response('No token', status=400)
 
     auth_info = ath.extract_auth_info(auth_token)
     return make_json_response(auth_info)
@@ -123,7 +129,7 @@ def get_token():
     auth_token = ath.get_auth_token()
     if not auth_token:
         app.logger.info('GET TOKEN: no token')
-        return flask.abort(flask.Response('No token', status=400))
+        return flask.Response('No token', status=403)
 
     return make_template_response('show-token.html', auth_token=auth_token)
 

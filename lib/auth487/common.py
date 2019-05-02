@@ -1,7 +1,7 @@
 import os
 
-from authlib.specs.rfc7515 import BadSignatureError
-from authlib.specs.rfc7519 import jwt
+from authlib.jose import jwt
+from authlib.jose.errors import BadSignatureError
 
 AUTH_COOKIE_NAME = 'AUTH_TOKEN'
 CSRF_COOKIE_NAME = 'CSRF_TOKEN'
@@ -26,9 +26,13 @@ def extract_auth_info(auth_token):
     try:
         claims = jwt.decode(auth_token, PUBLIC_KEY)
     except BadSignatureError:
-        return False
+        return None
 
     return dict(claims)
+
+
+def has_credentials(get_auth_token):
+    return bool(get_auth_token())
 
 
 def is_authenticated(get_auth_token):
@@ -47,4 +51,6 @@ def _raise_not_implemented():
 check_csrf_token = \
     set_csrf_token = \
     get_csrf_token = \
+    check_brute_force = \
+    protected_from_brute_force = \
     get_auth_token = _raise_not_implemented
