@@ -26,6 +26,8 @@ docker run -d --rm --name auth487-test --link dev-mongo \
 
 sleep 2
 
+docker logs -f auth487-test &> "/tmp/auth487-test.log" &
+
 test_auth_token="$(cat "$project_dir/.dev/test-auth-token.txt")"
 test_csrf_token="$(cat "$project_dir/.dev/test-csrf-token.txt")"
 test_vars="{
