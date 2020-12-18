@@ -5,8 +5,8 @@ import os
 from datetime import datetime, timedelta
 
 import flask
-from authlib.jose import jwt
 from lib.auth487 import flask as ath
+from lib.auth487.common import create_auth_token
 
 AUTH_INFO_FILE = os.environ.get('AUTH_INFO_FILE')
 
@@ -88,10 +88,7 @@ def login():
         app.logger.info('LOGIN: wrong password')
         return flask.Response('Wrong password', status=403)
 
-    header = {'alg': 'RS256'}
-    payload = {'login': login}
-
-    auth_token = jwt.encode(header, payload, PRIVATE_KEY)
+    auth_token = create_auth_token(login, PRIVATE_KEY)
     expires = datetime.now() + timedelta(days=30)
     domain = None if app.debug else ath.AUTH_DOMAIN
 
