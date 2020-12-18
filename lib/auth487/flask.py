@@ -5,7 +5,10 @@ import urllib.parse
 from functools import partial, wraps
 
 from .data_handler import is_remote_addr_clean, mark_auth_mistake
-from .common import *
+from .common import (
+    AUTH_COOKIE_NAME, CSRF_COOKIE_NAME, AUTH_DOMAIN,
+    has_credentials, is_authenticated,
+)
 
 try:
     import flask

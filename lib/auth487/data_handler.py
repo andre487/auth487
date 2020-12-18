@@ -5,7 +5,7 @@ import ssl
 try:
     import pymongo
 except ImportError as e:
-    logging.debug("PyMongo is not presented so don't use data handling")
+    logging.debug("PyMongo is not presented so don't use data handling: %s", e)
     pymongo = None
 
 CONNECT_TIMEOUT = 500
@@ -21,7 +21,7 @@ MONGO_SSL_CERT = os.environ.get('MONGO_SSL_CERT')
 MONGO_USER = os.environ.get('MONGO_USER')
 MONGO_PASSWORD = os.environ.get('MONGO_PASSWORD')
 MONGO_AUTH_SOURCE = os.environ.get('MONGO_AUTH_SOURCE')
-MONGO_DB_NAME = os.environ.get('AUTH_MONGO_DB_NAME', 'auth487')
+MONGO_DB_NAME = os.environ.get('MONGO_DB_NAME', 'auth487')
 
 _mongo_client = None
 

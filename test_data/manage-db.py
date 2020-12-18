@@ -9,7 +9,7 @@ MONGO_HOST = os.environ.get('MONGO_HOST', 'localhost')
 MONGO_PORT = int(os.environ.get('MONGO_PORT', 27017))
 MONGO_LOGIN = os.environ.get('MONGO_LOGIN')
 MONGO_PASSWORD = os.environ.get('MONGO_PASSWORD')
-MONGO_DB_NAME = os.environ.get('AUTH_MONGO_DB_NAME', 'auth487_docker_test')
+MONGO_DB_NAME = os.environ.get('MONGO_DB_NAME', 'auth487_docker_test')
 
 logging.basicConfig(level=logging.INFO)
 
@@ -17,17 +17,19 @@ logging.basicConfig(level=logging.INFO)
 def main():
     arg_parser = argparse.ArgumentParser()
     arg_parser.add_argument('action', choices=('setup', 'tear-down'))
+    arg_parser.add_argument('--force', action='store_true')
 
     args = arg_parser.parse_args()
 
     if args.action == 'setup':
-        setup()
+        setup(args.force)
     elif args.action == 'tear-down':
         tear_down()
 
 
-def setup():
-    tear_down()
+def setup(force):
+    if force:
+        tear_down()
 
     logging.info('Setting up DB %s', MONGO_DB_NAME)
 
@@ -38,9 +40,11 @@ def setup():
     db = get_mongo_db()
 
     for collection_name, data in fixture_data.items():
-        logging.info('Setting up collection %s', collection_name)
-
         collection = db[collection_name]
+        if collection.estimated_document_count():
+            continue
+
+        logging.info('Setting up collection %s', collection_name)
         collection.insert_many(data)
 
 
