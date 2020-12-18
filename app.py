@@ -5,13 +5,10 @@ import os
 from datetime import datetime, timedelta
 
 import flask
-from lib.auth487 import flask as ath
-from lib.auth487.common import create_auth_token
+from lib.auth487 import flask as ath, common as acm
+from lib.auth487.common import create_auth_token, PRIVATE_KEY, PUBLIC_KEY
 
 AUTH_INFO_FILE = os.environ.get('AUTH_INFO_FILE')
-
-PRIVATE_KEY = ath.PRIVATE_KEY
-PUBLIC_KEY = ath.PUBLIC_KEY
 
 assert PRIVATE_KEY, 'You should pass existing secret via AUTH_PRIVATE_KEY_FILE environment variable'
 assert PUBLIC_KEY, 'You should pass existing secret via AUTH_PUBLIC_KEY_FILE environment variable'
@@ -132,7 +129,7 @@ def get_auth_info():
     if not auth_token:
         return flask.Response('No token', status=400)
 
-    auth_info = ath.extract_auth_info(auth_token)
+    auth_info = acm.extract_auth_info(auth_token)
     return make_json_response(auth_info)
 
 
