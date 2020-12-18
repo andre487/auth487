@@ -57,7 +57,7 @@ def check_csrf_token(app, api_urls=()):
 def protected_from_brute_force(route_func):
     @wraps(route_func)
     def wrapped_route(*args, **kwargs):
-        remote_addr = flask.request.remote_addr
+        remote_addr = get_remote_addr(flask.request)
         if not is_remote_addr_clean(remote_addr):
             logging.info('Addr %s is not clean, so ban', remote_addr)
             mark_auth_mistake(remote_addr)
@@ -75,6 +75,17 @@ def protected_from_brute_force(route_func):
         return result
 
     return wrapped_route
+
+
+def get_remote_addr(request):
+    remote_addr = request.remote_addr
+
+    x_forwarded_for = request.environ.get('X_FORWARDED_FOR')
+    x_real_ip = request.environ.get('HTTP_X_REAL_IP', x_forwarded_for)
+    if x_real_ip:
+        remote_addr = x_real_ip
+
+    return remote_addr
 
 
 def require_auth(auth_path=AUTH_DOMAIN, return_route=None, no_redirect=False):
