@@ -83,12 +83,12 @@ def login():
 
     auth_token = create_auth_token(login, PRIVATE_KEY)
     expires = datetime.now() + timedelta(days=30)
-    domain = None if app.debug else ath.AUTH_DOMAIN
+    domain = None if app.debug else acm.AUTH_DOMAIN
 
     resp = flask.redirect(return_path, code=302)
     # noinspection PyTypeChecker
     resp.set_cookie(
-        ath.AUTH_COOKIE_NAME, auth_token, expires=expires,
+        acm.AUTH_COOKIE_NAME, auth_token, expires=expires,
         domain=domain, httponly=True, secure=not app.debug,
     )
 
@@ -103,12 +103,12 @@ def logout():
 
     auth_token = ''
     expires = datetime.now() - timedelta(days=30)
-    domain = None if app.debug else ath.AUTH_DOMAIN
+    domain = None if app.debug else acm.AUTH_DOMAIN
 
     resp = flask.redirect(return_path, code=302)
     # noinspection PyTypeChecker
     resp.set_cookie(
-        ath.AUTH_COOKIE_NAME, auth_token, expires=expires,
+        acm.AUTH_COOKIE_NAME, auth_token, expires=expires,
         domain=domain, httponly=True, secure=not app.debug,
     )
 
@@ -151,6 +151,7 @@ def get_token():
 
 def make_template_response(template, **kwargs):
     resp = make_response()
+    # noinspection PyUnresolvedReferences
     resp.response.append(flask.render_template(template, **kwargs))
 
     return resp

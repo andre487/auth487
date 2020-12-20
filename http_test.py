@@ -62,10 +62,10 @@ class TestLoginPage:
             acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
         }, set_token=False)
 
+        assert res.status_code == 302
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
         assert res.headers['location'] == 'http://foo'
         assert 'Redirecting...' in res.text
-        assert res.status_code == 302
 
     def test_no_csrf_cookie(self):
         res = make_app_request('/login', method='POST', data={
@@ -75,9 +75,9 @@ class TestLoginPage:
             acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
         }, set_token=False)
 
+        assert res.status_code == 403
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
         assert 'No CSRF token' in res.text
-        assert res.status_code == 403
 
     def test_no_csrf_field(self):
         res = make_app_request('/login', method='POST', cookies={
@@ -88,9 +88,9 @@ class TestLoginPage:
             'return-path': 'http://foo',
         }, set_token=False)
 
+        assert res.status_code == 403
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
         assert 'No CSRF token' in res.text
-        assert res.status_code == 403
 
     def test_no_login(self):
         res = make_app_request('/login', method='POST', cookies={
@@ -101,9 +101,9 @@ class TestLoginPage:
             acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
         }, set_token=False)
 
+        assert res.status_code == 400
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
         assert 'No auth info' in res.text
-        assert res.status_code == 400
 
     def test_no_password(self):
         res = make_app_request('/login', method='POST', cookies={
@@ -114,9 +114,9 @@ class TestLoginPage:
             acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
         }, set_token=False)
 
+        assert res.status_code == 400
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
         assert 'No auth info' in res.text
-        assert res.status_code == 400
 
     def test_wrong_login(self):
         res = make_app_request('/login', method='POST', cookies={
@@ -128,9 +128,9 @@ class TestLoginPage:
             acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
         }, set_token=False)
 
+        assert res.status_code == 403
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
         assert 'Wrong login or password' in res.text
-        assert res.status_code == 403
 
     def test_wrong_password(self):
         res = make_app_request('/login', method='POST', cookies={
@@ -142,9 +142,9 @@ class TestLoginPage:
             acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
         }, set_token=False)
 
+        assert res.status_code == 403
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
         assert 'Wrong login or password' in res.text
-        assert res.status_code == 403
 
     def test_wrong_method(self):
         res = make_app_request('/login', method='GET')
@@ -166,25 +166,25 @@ class TestLogout:
             acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
         })
 
+        assert res.status_code == 302
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
         assert res.headers['location'] == 'http://foo'
         assert f'{acm.AUTH_COOKIE_NAME}=;' in res.headers['set-cookie']
         assert 'Redirecting...' in res.text
-        assert res.status_code == 302
 
 
 class TestGetAuthInfo:
     def test_no_auth(self):
         res = make_app_request('/get-auth-info', set_token=False)
 
-        assert 'Redirecting...' in res.text
         assert res.status_code == 302
+        assert 'Redirecting...' in res.text
 
     def test_main(self):
         res = make_app_request('/get-auth-info')
 
-        assert res.headers['content-type'] == 'application/json; charset=utf-8'
         assert res.status_code == 200
+        assert res.headers['content-type'] == 'application/json; charset=utf-8'
 
         ans = res.json()
         assert ans.get('login') == 'test-user'
@@ -194,8 +194,8 @@ class TestGetPublicKey:
     def test_main(self):
         res = make_app_request('/get-public-key', set_token=False)
 
-        assert res.headers['content-type'] == 'text/plain; charset=utf-8'
         assert res.status_code == 200
+        assert res.headers['content-type'] == 'text/plain; charset=utf-8'
 
         assert '-----BEGIN RSA PUBLIC KEY-----' in res.text
         assert '-----END RSA PUBLIC KEY-----' in res.text
@@ -209,8 +209,8 @@ class TestGetToken:
             acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
         }, set_token=False)
 
-        assert 'Redirecting...' in res.text
         assert res.status_code == 302
+        assert 'Redirecting...' in res.text
 
     def test_main(self):
         res = make_app_request('/get-token', method='POST', cookies={
@@ -219,8 +219,8 @@ class TestGetToken:
             acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
         })
 
-        assert res.headers['content-type'] == 'text/html; charset=utf-8'
         assert res.status_code == 200
+        assert res.headers['content-type'] == 'text/html; charset=utf-8'
 
         assert res.headers['content-security-policy'] == (
             "default-src 'none'; "

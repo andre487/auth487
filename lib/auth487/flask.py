@@ -3,12 +3,8 @@ import random
 import sys
 import urllib.parse
 from functools import partial, wraps
-
-from .data_handler import is_remote_addr_clean, mark_auth_mistake
-from .common import (
-    AUTH_COOKIE_NAME, CSRF_COOKIE_NAME, AUTH_DOMAIN,
-    has_credentials, is_authenticated,
-)
+from . import common as acm
+from . import data_handler
 
 try:
     import flask
@@ -18,11 +14,11 @@ except ImportError:
 
 
 def get_auth_token():
-    return flask.request.cookies.get(AUTH_COOKIE_NAME)
+    return flask.request.cookies.get(acm.AUTH_COOKIE_NAME)
 
 
 def get_csrf_token():
-    return flask.request.cookies.get(CSRF_COOKIE_NAME)
+    return flask.request.cookies.get(acm.CSRF_COOKIE_NAME)
 
 
 def set_csrf_token(app, resp):
@@ -32,7 +28,7 @@ def set_csrf_token(app, resp):
 
     csrf_token = hex(random.randrange(0, sys.maxsize))
     resp.set_cookie(
-        CSRF_COOKIE_NAME, csrf_token,
+        acm.CSRF_COOKIE_NAME, csrf_token,
         httponly=True, secure=not app.debug,
     )
 
@@ -47,7 +43,7 @@ def check_csrf_token(app, api_urls=()):
         return
 
     expected_csrf_token = get_csrf_token()
-    actual_csrf_token = flask.request.form.get(CSRF_COOKIE_NAME)
+    actual_csrf_token = flask.request.form.get(acm.CSRF_COOKIE_NAME)
 
     if not expected_csrf_token or actual_csrf_token != expected_csrf_token:
         app.logger.info('CSRF: no token')
@@ -58,9 +54,9 @@ def protected_from_brute_force(route_func):
     @wraps(route_func)
     def wrapped_route(*args, **kwargs):
         remote_addr = get_remote_addr(flask.request)
-        if not is_remote_addr_clean(remote_addr):
+        if not data_handler.is_remote_addr_clean(remote_addr):
             logging.info('Addr %s is not clean, so ban', remote_addr)
-            mark_auth_mistake(remote_addr)
+            data_handler.mark_auth_mistake(remote_addr)
 
             return flask.Response(
                 '{"error": "Banned"}', status=403,
@@ -70,7 +66,7 @@ def protected_from_brute_force(route_func):
         result = route_func(*args, **kwargs)
         if result.status.startswith('403'):
             logging.info('Addr %s has auth mistake: %s', remote_addr, result.status)
-            mark_auth_mistake(remote_addr)
+            data_handler.mark_auth_mistake(remote_addr)
 
         return result
 
@@ -88,7 +84,7 @@ def get_remote_addr(request):
     return remote_addr
 
 
-def require_auth(auth_path=AUTH_DOMAIN, return_route=None, no_redirect=False):
+def require_auth(auth_path=acm.AUTH_DOMAIN, return_route=None, no_redirect=False):
     assert auth_path, 'You should provide auth path via AUTH_DOMAIN var or via argument'
 
     def require_auth_decorator(route_func):
@@ -130,5 +126,4 @@ def require_auth(auth_path=AUTH_DOMAIN, return_route=None, no_redirect=False):
     return require_auth_decorator
 
 
-has_credentials = partial(has_credentials, get_auth_token)
-is_authenticated = partial(is_authenticated, get_auth_token)
+is_authenticated = partial(acm.is_authenticated, get_auth_token)
