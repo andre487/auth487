@@ -8,5 +8,19 @@
 </head>
 
 <body class="page">
+    <header class="header">
+        <h1 class="header__item header__item_logo">Auth 487</h1>
+        {% if not hide_logout %}
+            <div class="header__item">
+                <form method="POST" class="header__logout" action="{{ url_for('logout') }}">
+                    <button type="submit" class="button button_logout">Log out</button>
+
+                    <input type="hidden" name="return-path" value="{{ return_path }}">
+                    <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
+                </form>
+            </div>
+        {% endif %}
+    </header>
+
     {% block content %}{% endblock %}
 </body>

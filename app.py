@@ -49,11 +49,17 @@ def index():
 
     # noinspection PyArgumentList
     if ath.is_authenticated():
-        app.logger.info('AUTH: OK')
-        return make_template_response('user-panel.html', return_path=return_path)
+        auth_token = ath.get_auth_token()
+        auth_info = acm.extract_auth_info(auth_token)
+        banned_ips = data_handler.get_banned_addresses()
 
-    app.logger.info('AUTH: need auth')
-    return make_template_response('auth-form.html', return_path=return_path)
+        return make_template_response(
+            'user-panel.html',
+            return_path=return_path, banned_ips=banned_ips,
+            auth_token=auth_token, auth_info=auth_info,
+        )
+
+    return make_template_response('auth-form.html', return_path=return_path, hide_logout=True)
 
 
 @app.route('/login', methods=('POST',))
@@ -64,13 +70,11 @@ def login():
     return_path = flask.request.form.get('return-path', flask.url_for('index'))
 
     if not login or not password:
-        app.logger.info('LOGIN: no auth info')
         return flask.Response('No auth info', status=400)
 
     expected_password_hash = AUTH_INFO_DATA.get(login)
 
     if not expected_password_hash:
-        app.logger.info('LOGIN: wrong login')
         return flask.Response('Wrong login or password', status=403)
 
     hasher = hashlib.sha512()
@@ -78,7 +82,6 @@ def login():
     actual_password_hash = hasher.hexdigest()
 
     if actual_password_hash != expected_password_hash:
-        app.logger.info('LOGIN: wrong password')
         return flask.Response('Wrong login or password', status=403)
 
     auth_token = create_auth_token(login, PRIVATE_KEY)
@@ -92,7 +95,6 @@ def login():
         domain=domain, httponly=True, secure=not app.debug,
     )
 
-    app.logger.info('LOGIN: OK')
     return make_response(resp)
 
 
@@ -112,49 +114,13 @@ def logout():
         domain=domain, httponly=True, secure=not app.debug,
     )
 
-    app.logger.info('LOGOUT: OK')
     return make_response(resp)
-
-
-@app.route('/get-banned-ip-list')
-@ath.protected_from_brute_force
-@ath.require_auth()
-def get_banned_ip_list():
-    banned_ips = data_handler.get_banned_addresses()
-    return make_template_response('banned_ip_list.html', banned_ips=banned_ips)
-
-
-@app.route('/get-auth-info')
-@ath.protected_from_brute_force
-@ath.require_auth()
-def get_auth_info():
-    auth_token = flask.request.args.get('auth-token')
-    if not auth_token:
-        auth_token = ath.get_auth_token()
-
-    if not auth_token:
-        return flask.Response('No token', status=400)
-
-    auth_info = acm.extract_auth_info(auth_token)
-    return make_json_response(auth_info)
 
 
 @app.route('/get-public-key')
 @ath.protected_from_brute_force
 def get_public_key():
     return flask.Response(PUBLIC_KEY, headers={'Content-Type': 'text/plain; charset=utf-8'})
-
-
-@app.route('/get-token', methods=('POST',))
-@ath.protected_from_brute_force
-@ath.require_auth()
-def get_token():
-    auth_token = ath.get_auth_token()
-    if not auth_token:
-        app.logger.info('GET TOKEN: no token')
-        return flask.Response('No token', status=403)
-
-    return make_template_response('show-token.html', auth_token=auth_token)
 
 
 def make_template_response(template, **kwargs):

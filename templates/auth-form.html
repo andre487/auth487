@@ -2,19 +2,29 @@
 
 {% block content %}
     <!-- Page: Auth form -->
+    <section class="auth-form-wrapper">
+        <form method="POST" class="auth-form" action="{{ url_for('login') }}">
+            <h2 class="section-header">Login to service</h2>
 
-    <form method="POST" class="form form_auth" action="{{ url_for('login') }}">
-        <input name="login" type="text" placeholder="Login" required
-               class="input auth-form__input auth-form__input_login">
-        <input name="password" type="password" placeholder="Password" required
-               class="input auth-form__input auth-form__input_password">
+            <div class="auth-form__item">
+                <label for="login-input" class="visually-hidden">Login</label>
+                <input id="login-input" name="login" type="text" placeholder="Login" required
+                       class="auth-form__input auth-form__input_login">
+            </div>
 
-        <div class="button-wrapper">
-            <button type="submit"
-                    class="button auth-form__button auth-form__button_submit">Auth</button>
-        </div>
+            <div class="auth-form__item">
+                <label for="password-input" class="visually-hidden">Password</label>
+                <input id="password-input" name="password" type="password" placeholder="Password" required
+                       class="auth-form__input auth-form__input_password">
+            </div>
 
-        <input type="hidden" name="return-path" value="{{ return_path }}">
-        <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
-    </form>
+            <div class="auth-form__item">
+                <button type="submit"
+                        class="button auth-form__button auth-form__button_submit">Auth</button>
+            </div>
+
+            <input type="hidden" name="return-path" value="{{ return_path }}">
+            <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
+        </form>
+    </section>
 {% endblock %}

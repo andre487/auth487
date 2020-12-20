@@ -2,27 +2,22 @@
 
 {% block content %}
     <!-- Page: User panel -->
+    <section class="user-panel">
+        <h2 class="section-header">Auth token</h2>
+        <code class="user-panel__auth-token code">{{ auth_token }}</code>
 
-    <div class="user-panel">
-        <form method="POST" class="form user-panel_form" action="{{ url_for('get_token') }}">
-            <button type="submit" class="button button_get-token">Get my token</button>
-            <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
-        </form>
+        <h2 class="section-header section-header_indent">Auth info</h2>
+        <code class="user-panel__auth-token code">{{ auth_info }}</code>
 
-        <form class="form user-panel_form" action="{{ url_for('get_auth_info') }}">
-            <button type="submit" class="button button_get-auth-info">Get my auth info</button>
-            <input type="hidden" name="auth-token" value="{{ auth_token }}">
-        </form>
-
-        <form class="form user-panel_form" action="{{ url_for('get_banned_ip_list') }}">
-            <button type="submit" class="button button_get-auth-info">Get banned IPs</button>
-        </form>
-
-        <form method="POST" class="form user-panel_form" action="{{ url_for('logout') }}">
-            <button type="submit" class="button button_logout">Log out</button>
-
-            <input type="hidden" name="return-path" value="{{ return_path }}">
-            <input type="hidden" name="CSRF_TOKEN" value="{{ csrf_token }}">
-        </form>
-    </div>
+        <h2 class="section-header section-header_indent">Banned IPs</h2>
+        {% if banned_ips %}
+            <ul class="plain-list">
+                {% for banned_ip in banned_ips %}
+                    <li>{{ banned_ip }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            No banned IPs
+        {% endif %}
+    </section>
 {% endblock %}
