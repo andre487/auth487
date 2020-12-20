@@ -55,7 +55,14 @@ def mark_auth_mistake(remote_addr):
         collection.insert({'remote_addr': remote_addr, 'mistakes': 1})
 
 
-def get_banned_addresses():
+def has_access_to(auth_info, service):
+    return bool(auth_info.get('access', {}).get(service))
+
+
+def get_banned_addresses(auth_info):
+    if not has_access_to(auth_info, 'banned_ips'):
+        return []
+
     if not pymongo:
         logging.warning('No MongoDB so banned addresses list is always empty')
         return []

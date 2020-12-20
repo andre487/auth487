@@ -51,12 +51,14 @@ def index():
     if ath.is_authenticated():
         auth_token = ath.get_auth_token()
         auth_info = acm.extract_auth_info(auth_token)
-        banned_ips = data_handler.get_banned_addresses()
+        banned_ips = data_handler.get_banned_addresses(auth_info)
+        banned_ips_authorized = data_handler.has_access_to(auth_info, 'banned_ips')
 
         return make_template_response(
             'user-panel.html',
             return_path=return_path, banned_ips=banned_ips,
             auth_token=auth_token, auth_info=auth_info,
+            banned_ips_authorized=banned_ips_authorized,
         )
 
     return make_template_response('auth-form.html', return_path=return_path, hide_logout=True)
@@ -72,7 +74,8 @@ def login():
     if not login or not password:
         return flask.Response('No auth info', status=400)
 
-    expected_password_hash = AUTH_INFO_DATA.get(login)
+    auth_data = AUTH_INFO_DATA.get(login, {})
+    expected_password_hash = auth_data.get("password")
 
     if not expected_password_hash:
         return flask.Response('Wrong login or password', status=403)
@@ -84,7 +87,7 @@ def login():
     if actual_password_hash != expected_password_hash:
         return flask.Response('Wrong login or password', status=403)
 
-    auth_token = create_auth_token(login, PRIVATE_KEY)
+    auth_token = create_auth_token(login, auth_data, PRIVATE_KEY)
     expires = datetime.now() + timedelta(days=30)
     domain = None if app.debug else acm.AUTH_DOMAIN
 

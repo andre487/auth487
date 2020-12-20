@@ -10,14 +10,16 @@
         <code class="user-panel__auth-token code code_wrap">{{ auth_info }}</code>
 
         <h2 class="section-header section-header_indent">Banned IPs</h2>
-        {% if banned_ips %}
+        {% if banned_ips_authorized and banned_ips %}
             <ul class="plain-list">
                 {% for banned_ip in banned_ips %}
                     <li>{{ banned_ip }}</li>
                 {% endfor %}
             </ul>
-        {% else %}
+        {% elif banned_ips_authorized %}
             No banned IPs
+        {% else %}
+            No access to banned IPs
         {% endif %}
     </section>
 {% endblock %}

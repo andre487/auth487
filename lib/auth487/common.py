@@ -83,8 +83,10 @@ check_csrf_token = \
     get_auth_token = _raise_not_implemented
 
 
-def create_auth_token(login, private_key):
+def create_auth_token(login, auth_data, private_key):
     header = {'alg': 'RS256'}
-    payload = {'login': login}
-
+    payload = {
+        'login': login,
+        'access': auth_data['access'],
+    }
     return jwt.encode(header, payload, private_key)
