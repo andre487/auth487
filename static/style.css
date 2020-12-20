@@ -77,6 +77,11 @@
     font-family: monospace;
 }
 
+.code_wrap
+{
+    word-wrap: anywhere;
+}
+
 .plain-list
 {
     margin: 0;
