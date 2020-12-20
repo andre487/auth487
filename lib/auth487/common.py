@@ -71,6 +71,15 @@ def is_authenticated(get_auth_token):
     return bool(auth_info)
 
 
+def create_auth_token(login, auth_data, private_key):
+    header = {'alg': 'RS256'}
+    payload = {
+        'login': login,
+        'access': auth_data['access'],
+    }
+    return jwt.encode(header, payload, private_key)
+
+
 def _raise_not_implemented():
     raise NotImplementedError('Use framework specific modules')
 
@@ -79,14 +88,4 @@ check_csrf_token = \
     set_csrf_token = \
     get_csrf_token = \
     check_brute_force = \
-    protected_from_brute_force = \
-    get_auth_token = _raise_not_implemented
-
-
-def create_auth_token(login, auth_data, private_key):
-    header = {'alg': 'RS256'}
-    payload = {
-        'login': login,
-        'access': auth_data['access'],
-    }
-    return jwt.encode(header, payload, private_key)
+    protected_from_brute_force = _raise_not_implemented
