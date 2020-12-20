@@ -5,7 +5,7 @@ import os
 from datetime import datetime, timedelta
 
 import flask
-from lib.auth487 import flask as ath, common as acm
+from lib.auth487 import flask as ath, common as acm, data_handler
 from lib.auth487.common import create_auth_token, PRIVATE_KEY, PUBLIC_KEY
 
 AUTH_INFO_FILE = os.environ.get('AUTH_INFO_FILE')
@@ -114,6 +114,14 @@ def logout():
 
     app.logger.info('LOGOUT: OK')
     return make_response(resp)
+
+
+@app.route('/get-banned-ip-list')
+@ath.protected_from_brute_force
+@ath.require_auth()
+def get_banned_ip_list():
+    banned_ips = data_handler.get_banned_addresses()
+    return make_template_response('banned_ip_list.html', banned_ips=banned_ips)
 
 
 @app.route('/get-auth-info')

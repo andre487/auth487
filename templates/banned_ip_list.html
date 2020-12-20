@@ -1,0 +1,16 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    {% if not banned_ips %}
+        <div class="banned-ips banned-ips_has-data_no">No banned IPs</div>
+    {% else %}
+        <div class="banned-ips banned-ips_has-data_yes">
+            <ul class="banned-ips__list">
+                {% for ip in banned_ips %}
+                    <li>{{ ip }}</li>
+                {% endfor %}
+
+            </ul>
+        </div>
+    {% endif %}
+{% endblock %}

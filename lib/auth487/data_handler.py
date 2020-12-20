@@ -58,7 +58,7 @@ def mark_auth_mistake(remote_addr):
 def get_banned_addresses():
     if not pymongo:
         logging.warning('No MongoDB so banned addresses list is always empty')
-        return True
+        return []
 
     collection = _get_remote_addr_collection()
 
