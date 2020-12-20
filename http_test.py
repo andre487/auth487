@@ -129,7 +129,7 @@ class TestLoginPage:
         }, set_token=False)
 
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
-        assert 'Wrong login' in res.text
+        assert 'Wrong login or password' in res.text
         assert res.status_code == 403
 
     def test_wrong_password(self):
@@ -143,7 +143,7 @@ class TestLoginPage:
         }, set_token=False)
 
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
-        assert 'Wrong password' in res.text
+        assert 'Wrong login or password' in res.text
         assert res.status_code == 403
 
     def test_wrong_method(self):

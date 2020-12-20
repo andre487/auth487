@@ -48,10 +48,6 @@ def index():
     return_path = flask.request.args.get('return-path', flask.url_for('index'))
 
     # noinspection PyArgumentList
-    if ath.has_credentials() and not ath.is_authenticated():
-        return flask.Response('Wrong credentials', status=403)
-
-    # noinspection PyArgumentList
     if ath.is_authenticated():
         app.logger.info('AUTH: OK')
         return make_template_response('user-panel.html', return_path=return_path)
@@ -75,7 +71,7 @@ def login():
 
     if not expected_password_hash:
         app.logger.info('LOGIN: wrong login')
-        return flask.Response('Wrong login', status=403)
+        return flask.Response('Wrong login or password', status=403)
 
     hasher = hashlib.sha512()
     hasher.update(password.encode('utf-8'))
@@ -83,13 +79,14 @@ def login():
 
     if actual_password_hash != expected_password_hash:
         app.logger.info('LOGIN: wrong password')
-        return flask.Response('Wrong password', status=403)
+        return flask.Response('Wrong login or password', status=403)
 
     auth_token = create_auth_token(login, PRIVATE_KEY)
     expires = datetime.now() + timedelta(days=30)
     domain = None if app.debug else ath.AUTH_DOMAIN
 
     resp = flask.redirect(return_path, code=302)
+    # noinspection PyTypeChecker
     resp.set_cookie(
         ath.AUTH_COOKIE_NAME, auth_token, expires=expires,
         domain=domain, httponly=True, secure=not app.debug,
@@ -109,6 +106,7 @@ def logout():
     domain = None if app.debug else ath.AUTH_DOMAIN
 
     resp = flask.redirect(return_path, code=302)
+    # noinspection PyTypeChecker
     resp.set_cookie(
         ath.AUTH_COOKIE_NAME, auth_token, expires=expires,
         domain=domain, httponly=True, secure=not app.debug,

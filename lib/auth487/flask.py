@@ -99,13 +99,6 @@ def require_auth(auth_path=AUTH_DOMAIN, return_route=None, no_redirect=False):
         @wraps(route_func)
         def wrapped_route(*args, **kwargs):
             # noinspection PyArgumentList
-            if has_credentials() and not is_authenticated():
-                return flask.Response(
-                    '{"error": "Wrong credentials"}', status=403,
-                    headers={'Content-Type': 'application/json'},
-                )
-
-            # noinspection PyArgumentList
             if not is_authenticated():
                 if no_redirect:
                     return flask.Response(
