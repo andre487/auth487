@@ -84,7 +84,7 @@ def get_remote_addr(request):
     return remote_addr
 
 
-def require_auth(auth_path=acm.AUTH_DOMAIN, return_route=None, no_redirect=False):
+def require_auth(auth_path=acm.AUTH_DOMAIN, return_route=None, no_redirect=False, access=()):
     assert auth_path, 'You should provide auth path via AUTH_DOMAIN var or via argument'
 
     def require_auth_decorator(route_func):
@@ -118,6 +118,19 @@ def require_auth(auth_path=acm.AUTH_DOMAIN, return_route=None, no_redirect=False
                         return_url
                 )
                 return flask.redirect(auth_url, code=302)
+
+            auth_info = acm.extract_auth_info(acm.get_auth_token())
+            has_access = True
+            for rule in access:
+                has_access = has_access and data_handler.has_access_to(auth_info, rule)
+                if not has_access:
+                    break
+
+            if not has_access:
+                return flask.Response(
+                    '{"error": "You are not authorized for this service"}', status=401,
+                    headers={'Content-Type': 'application/json'},
+                )
 
             return route_func(*args, **kwargs)
 
