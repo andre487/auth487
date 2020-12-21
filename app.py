@@ -5,6 +5,7 @@ import os
 from datetime import datetime, timedelta
 
 import flask
+import templating
 from lib.auth487 import flask as ath, common as acm, data_handler
 from lib.auth487.common import create_auth_token, PRIVATE_KEY, PUBLIC_KEY
 
@@ -35,6 +36,7 @@ ADDITIONAL_HEADERS = {
 logging.basicConfig(format=LOG_FORMAT, level=LOG_LEVEL)
 
 app = flask.Flask(__name__)
+templating.setup_filters(app)
 
 
 @app.before_request
