@@ -93,6 +93,11 @@
         src: ~/.private/auth487/auth_key.pub.pem
         dest: /etc/auth487/auth_key.pub.pem
 
+    - name: Setup Gmail credentials file
+      copy:
+        src: ~/.private/gmail-sender/credentials.json
+        dest: /etc/auth487/gmail_credentials.json
+
     - name: Update image
       shell: docker pull andre487/{{ container_name }}
 
@@ -121,5 +126,8 @@
           -e "AUTH_PUBLIC_KEY_FILE=/etc/auth487/auth_key.pub.pem" \
           -e "AUTH_DOMAIN={{ auth_domain }}" \
           -e "AUTH_INFO_FILE=/etc/auth487/auth-info.json" \
+          -e "NOTIFICATION_EMAIL_FROM={{ notification_from }}" \
+          -e "NOTIFICATION_EMAIL_TO={{ notification_to }}" \
+          -e "GMAIL_CREDENTIALS_FILE=/etc/auth487/gmail_credentials.json" \
           -p 127.0.0.1:{{ service_port }}:5000 \
           andre487/{{ container_name }}

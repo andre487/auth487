@@ -12,3 +12,5 @@ Dockerfile
 **/.DS_Store
 **/*.iml
 **/*.md
+**/*.egg-info
+**/dist

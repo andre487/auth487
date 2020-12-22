@@ -2,15 +2,15 @@ import hashlib
 import json
 import logging
 import os
-from datetime import datetime, timedelta
-
 import flask
+import mail
 import pyotp
 import templating
+from datetime import datetime, timedelta
 from lib.auth487 import flask as ath, common as acm, data_handler
 from lib.auth487.common import create_auth_token, PRIVATE_KEY, PUBLIC_KEY
 
-AUTH_INFO_FILE = os.environ.get('AUTH_INFO_FILE')
+AUTH_INFO_FILE = os.getenv('AUTH_INFO_FILE')
 
 assert PRIVATE_KEY, 'You should pass existing secret via AUTH_PRIVATE_KEY_FILE environment variable'
 assert PUBLIC_KEY, 'You should pass existing secret via AUTH_PUBLIC_KEY_FILE environment variable'
@@ -126,11 +126,13 @@ def submit_totp():
     if sf_record['password_hash'] != expected_password_hash:
         return flask.Response('Wrong login or password', status=403)
 
+    resp = flask.redirect(return_path, code=302)
+    mail.send_new_login_notification(flask.request, resp)
+
     auth_token = create_auth_token(login, auth_data, PRIVATE_KEY)
     expires = datetime.now() + timedelta(days=30)
     domain = None if app.debug else acm.AUTH_DOMAIN
 
-    resp = flask.redirect(return_path, code=302)
     # noinspection PyTypeChecker
     resp.set_cookie(
         acm.AUTH_COOKIE_NAME, auth_token, expires=expires,
@@ -167,6 +169,13 @@ def get_public_key():
 
 def make_template_response(template, **kwargs):
     resp = make_response(**kwargs)
+
+    if 'base_resp' in kwargs:
+        del kwargs['base_resp']
+
+    if 'http_headers' in kwargs:
+        del kwargs['http_headers']
+
     # noinspection PyUnresolvedReferences
     resp.response.append(flask.render_template(template, **kwargs))
 

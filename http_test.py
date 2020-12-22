@@ -2,6 +2,7 @@ import json
 import os
 import pyotp
 import requests
+from urllib import parse as url_parse
 from cli_tasks import common
 from lib.auth487 import common as acm
 
@@ -164,6 +165,11 @@ class TestOtpPage:
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
         assert res.headers['location'] == 'http://foo'
         assert 'Redirecting...' in res.text
+
+        message = url_parse.unquote(res.headers['x-login-message'])
+        assert 'New login success' in message
+        assert 'IP:' in message
+        assert 'Browser:' in message
 
     def test_no_login(self):
         auth_id = self._log_in()
