@@ -59,7 +59,7 @@ class TestLoginPage:
             'login': 'test',
             'password': 'test',
             'return-path': 'http://foo',
-            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
         }, set_token=False)
 
         assert res.status_code == 302
@@ -72,7 +72,7 @@ class TestLoginPage:
             'login': 'test',
             'password': 'test',
             'return-path': 'http://foo',
-            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
         }, set_token=False)
 
         assert res.status_code == 403
@@ -98,7 +98,7 @@ class TestLoginPage:
         }, data={
             'password': 'test',
             'return-path': 'http://foo',
-            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
         }, set_token=False)
 
         assert res.status_code == 400
@@ -111,7 +111,7 @@ class TestLoginPage:
         }, data={
             'login': 'test',
             'return-path': 'http://foo',
-            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
         }, set_token=False)
 
         assert res.status_code == 400
@@ -125,7 +125,7 @@ class TestLoginPage:
             'login': 'invalid-login',
             'password': 'test',
             'return-path': 'http://foo',
-            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
         }, set_token=False)
 
         assert res.status_code == 403
@@ -139,7 +139,7 @@ class TestLoginPage:
             'login': 'test',
             'password': 'invalid-password',
             'return-path': 'http://foo',
-            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
         }, set_token=False)
 
         assert res.status_code == 403
@@ -163,7 +163,7 @@ class TestLogout:
             'login': 'test',
             'password': 'test',
             'return-path': 'http://foo',
-            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
         })
 
         assert res.status_code == 302

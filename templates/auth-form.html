@@ -24,7 +24,7 @@
             </div>
 
             <input type="hidden" name="return-path" value="{{ return_path }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="{{ csrf_field_name }}" value="{{ csrf_token }}">
         </form>
     </section>
 {% endblock %}

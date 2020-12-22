@@ -82,9 +82,7 @@ def login():
     if not expected_password_hash:
         return flask.Response('Wrong login or password', status=403)
 
-    hasher = hashlib.sha512()
-    hasher.update(password.encode('utf-8'))
-    actual_password_hash = hasher.hexdigest()
+    actual_password_hash = hashlib.sha512(password.encode('utf-8')).hexdigest()
 
     if actual_password_hash != expected_password_hash:
         return flask.Response('Wrong login or password', status=403)
@@ -149,6 +147,9 @@ def make_response(base_resp=None):
     for name, val in ADDITIONAL_HEADERS.items():
         base_resp.headers[name] = val
 
-    app.jinja_env.globals['csrf_token'] = ath.set_csrf_token(app, resp=base_resp)
+    app.jinja_env.globals.update(
+        csrf_field_name=acm.CSRF_FIELD_NAME,
+        csrf_token=ath.set_csrf_token(app, resp=base_resp),
+    )
 
     return base_resp
