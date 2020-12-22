@@ -1,6 +1,5 @@
 import logging
-import random
-import sys
+import secrets
 import urllib.parse
 from functools import partial, wraps
 from . import common as acm
@@ -26,10 +25,10 @@ def set_csrf_token(app, resp):
     if csrf_token:
         return csrf_token
 
-    csrf_token = hex(random.randrange(0, sys.maxsize))
+    csrf_token = secrets.token_hex(16)
     resp.set_cookie(
         acm.CSRF_COOKIE_NAME, csrf_token,
-        httponly=True, secure=not app.debug,
+        httponly=True, secure=not app.debug, samesite='strict',
     )
 
     return csrf_token
