@@ -42,7 +42,7 @@ def check_csrf_token(app, api_urls=()):
         return
 
     expected_csrf_token = get_csrf_token()
-    actual_csrf_token = flask.request.form.get(acm.CSRF_COOKIE_NAME)
+    actual_csrf_token = flask.request.form.get(acm.CSRF_FIELD_NAME)
 
     if not expected_csrf_token or actual_csrf_token != expected_csrf_token:
         app.logger.info('CSRF: no token')

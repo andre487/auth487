@@ -5,7 +5,7 @@ from invoke import task
 
 
 @task
-def run_dev(c, port=8080, recreate_venv=False):
+def run_dev(c, port=5487, recreate_venv=False):
     """Run Flask dev server"""
     cli_tasks.run_dev.run(c, port, recreate_venv)
 

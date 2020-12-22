@@ -5,10 +5,14 @@ from urllib import request
 from authlib.jose import jwt
 from authlib.jose.errors import BadSignatureError, DecodeError
 
-AUTH_COOKIE_NAME = 'AUTH_TOKEN'
-CSRF_COOKIE_NAME = 'CSRF_TOKEN'
+AUTH_DOMAIN = os.environ.get('AUTH_DOMAIN', 'http://127.0.0.1:5487')
 
-AUTH_DOMAIN = os.environ.get('AUTH_DOMAIN', 'http://localhost:5487')
+AUTH_COOKIE_NAME = '__Secure-Auth-Token'
+CSRF_COOKIE_NAME = '__Host-Csrf-Token'
+CSRF_FIELD_NAME = 'csrf_token'
+if os.getenv('AUTH_DEV_MODE') == '1':
+    AUTH_COOKIE_NAME = 'Dev-Auth-Token'
+    CSRF_COOKIE_NAME = 'Dev-Csrf-Token'
 
 PRIVATE_KEY_FILE = os.environ.get('AUTH_PRIVATE_KEY_FILE')
 PUBLIC_KEY_FILE = os.environ.get('AUTH_PUBLIC_KEY_FILE')
