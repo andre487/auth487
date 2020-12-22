@@ -1,9 +1,15 @@
+import json
 import os
+import pyotp
 import requests
 from cli_tasks import common
 from lib.auth487 import common as acm
 
 APP_PORT = int(os.getenv('APP_PORT', 8080))
+AUTH_INFO_FILE = os.path.join(os.path.dirname(__file__), 'test_data', 'test-auth-info.json')
+
+with open(AUTH_INFO_FILE) as fp:
+    AUTH_INFO_DATA = json.load(fp)
 
 
 def make_app_request(handler, method='GET', data=None, headers=None, cookies=None, set_token=True):
@@ -62,10 +68,9 @@ class TestLoginPage:
             acm.CSRF_FIELD_NAME: common.get_csrf_token(),
         }, set_token=False)
 
-        assert res.status_code == 302
+        assert res.status_code == 200
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
-        assert res.headers['location'] == 'http://foo'
-        assert 'Redirecting...' in res.text
+        assert '<!-- Page: TOTP form -->' in res.text
 
     def test_no_csrf_cookie(self):
         res = make_app_request('/login', method='POST', data={
@@ -130,21 +135,7 @@ class TestLoginPage:
 
         assert res.status_code == 403
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
-        assert 'Wrong login or password' in res.text
-
-    def test_wrong_password(self):
-        res = make_app_request('/login', method='POST', cookies={
-            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
-        }, data={
-            'login': 'test',
-            'password': 'invalid-password',
-            'return-path': 'http://foo',
-            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
-        }, set_token=False)
-
-        assert res.status_code == 403
-        assert res.headers['content-type'] == 'text/html; charset=utf-8'
-        assert 'Wrong login or password' in res.text
+        assert 'User is not found' in res.text
 
     def test_wrong_method(self):
         res = make_app_request('/login', method='GET')
@@ -153,6 +144,184 @@ class TestLoginPage:
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
 
         assert '<title>405 Method Not Allowed</title>' in res.text
+
+
+class TestOtpPage:
+    def test_auth_process(self):
+        auth_id = self._log_in()
+
+        res = make_app_request('/submit-totp', method='POST', cookies={
+            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+        }, data={
+            'login': 'test',
+            'password': self._get_otp(),
+            'auth_id': auth_id,
+            'return-path': 'http://foo',
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
+        }, set_token=False)
+
+        assert res.status_code == 302
+        assert res.headers['content-type'] == 'text/html; charset=utf-8'
+        assert res.headers['location'] == 'http://foo'
+        assert 'Redirecting...' in res.text
+
+    def test_no_login(self):
+        auth_id = self._log_in()
+
+        res = make_app_request('/submit-totp', method='POST', cookies={
+            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+        }, data={
+            'password': self._get_otp(),
+            'auth_id': auth_id,
+            'return-path': 'http://foo',
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
+        }, set_token=False)
+
+        assert res.status_code == 400
+        assert res.headers['content-type'] == 'text/html; charset=utf-8'
+        assert 'No auth info' in res.text
+
+    def test_no_auth_id(self):
+        self._log_in()
+
+        res = make_app_request('/submit-totp', method='POST', cookies={
+            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+        }, data={
+            'login': 'test',
+            'password': self._get_otp(),
+            'return-path': 'http://foo',
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
+        }, set_token=False)
+
+        assert res.status_code == 400
+        assert res.headers['content-type'] == 'text/html; charset=utf-8'
+        assert 'No auth info' in res.text
+
+    def test_wrong_auth_id(self):
+        self._log_in()
+
+        res = make_app_request('/submit-totp', method='POST', cookies={
+            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+        }, data={
+            'login': 'test',
+            'password': self._get_otp(),
+            'auth_id': 'wrong-auth-id',
+            'return-path': 'http://foo',
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
+        }, set_token=False)
+
+        assert res.status_code == 400
+        assert res.headers['content-type'] == 'text/html; charset=utf-8'
+        assert 'No auth info' in res.text
+
+    def test_no_password(self):
+        auth_id = self._log_in()
+
+        res = make_app_request('/submit-totp', method='POST', cookies={
+            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+        }, data={
+            'login': 'test',
+            'auth_id': auth_id,
+            'return-path': 'http://foo',
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
+        }, set_token=False)
+
+        assert res.status_code == 400
+        assert res.headers['content-type'] == 'text/html; charset=utf-8'
+        assert 'No auth info' in res.text
+
+    def test_wrong_login(self):
+        auth_id = self._log_in()
+
+        res = make_app_request('/submit-totp', method='POST', cookies={
+            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+        }, data={
+            'login': 'invalid-login',
+            'password': self._get_otp(),
+            'auth_id': auth_id,
+            'return-path': 'http://foo',
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
+        }, set_token=False)
+
+        assert res.status_code == 403
+        assert res.headers['content-type'] == 'text/html; charset=utf-8'
+        assert 'User is not found' in res.text
+
+    def test_wrong_password(self):
+        auth_id = self._log_in()
+
+        res = make_app_request('/submit-totp', method='POST', cookies={
+            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+        }, data={
+            'login': 'test',
+            'password': '123456',
+            'auth_id': auth_id,
+            'return-path': 'http://foo',
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
+        }, set_token=False)
+
+        assert res.status_code == 403
+        assert res.headers['content-type'] == 'text/html; charset=utf-8'
+        assert 'Wrong OTP' in res.text
+
+    def test_no_csrf_cookie(self):
+        auth_id = self._log_in()
+
+        res = make_app_request('/submit-totp', method='POST', data={
+            'login': 'test',
+            'password': self._get_otp(),
+            'auth_id': auth_id,
+            'return-path': 'http://foo',
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
+        }, set_token=False)
+
+        assert res.status_code == 403
+        assert res.headers['content-type'] == 'text/html; charset=utf-8'
+        assert 'No CSRF token' in res.text
+
+    def test_no_csrf_field(self):
+        auth_id = self._log_in()
+
+        res = make_app_request('/submit-totp', method='POST', cookies={
+            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+        }, data={
+            'login': 'test',
+            'password': self._get_otp(),
+            'auth_id': auth_id,
+            'return-path': 'http://foo',
+        }, set_token=False)
+
+        assert res.status_code == 403
+        assert res.headers['content-type'] == 'text/html; charset=utf-8'
+        assert 'No CSRF token' in res.text
+
+    def test_wrong_method(self):
+        res = make_app_request('/submit-totp', method='GET')
+
+        assert res.status_code == 405
+        assert res.headers['content-type'] == 'text/html; charset=utf-8'
+
+        assert '<title>405 Method Not Allowed</title>' in res.text
+
+    def _log_in(self, login='test'):
+        res = make_app_request('/login', method='POST', cookies={
+            acm.CSRF_COOKIE_NAME: common.get_csrf_token(),
+        }, data={
+            'login': login,
+            'password': 'test',
+            'return-path': 'http://foo',
+            acm.CSRF_FIELD_NAME: common.get_csrf_token(),
+        }, set_token=False)
+
+        assert res.status_code == 200
+
+        auth_id = res.headers.get('x-auth-id')
+        assert auth_id is not None
+
+        return auth_id
+
+    def _get_otp(self, login='test'):
+        return pyotp.TOTP(AUTH_INFO_DATA[login]['totp_secret']).now()
 
 
 class TestLogout:

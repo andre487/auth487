@@ -1,16 +1,14 @@
 import logging
 import os
+import secrets
 import ssl
-
-try:
-    import pymongo
-except ImportError as e:
-    logging.debug("PyMongo is not presented so don't use data handling: %s", e)
-    pymongo = None
+import pyotp
+import pymongo
+from .common import AUTH_DEV_MODE
 
 CONNECT_TIMEOUT = 500
-AUTH_MISTAKES_TO_BAN = int(os.environ.get('AUTH_MISTAKES_TO_BAN', 5))
-AUTH_BAN_TIME = int(os.environ.get('AUTH_BAN_TIME', 86400))
+AUTH_MISTAKES_TO_BAN = int(os.environ.get('AUTH_MISTAKES_TO_BAN', 10))
+AUTH_BAN_TIME = int(os.environ.get('AUTH_BAN_TIME', 60))
 
 MONGO_HOST = os.environ.get('MONGO_HOST', 'localhost')
 MONGO_PORT = int(os.environ.get('MONGO_PORT', 27017))
@@ -72,6 +70,35 @@ def get_banned_addresses(auth_info):
     return [doc['remote_addr'] for doc in collection.find({})]
 
 
+def create_second_factor_record(login, auth_data, password_hash):
+    auth_id = secrets.token_hex(32)
+    _get_second_factor_collection().insert({
+        'login': login,
+        'auth_id': auth_id,
+        'password_hash': password_hash,
+    })
+
+    if AUTH_DEV_MODE:
+        totp = pyotp.TOTP(auth_data['totp_secret'])
+        logging.info('!!! TOTP: %s', totp.now())
+
+    return auth_id
+
+
+def get_second_factor_record(login, auth_id):
+    return _get_second_factor_collection().find_one({
+        'login': login,
+        'auth_id': auth_id,
+    })
+
+
+def remove_second_factor_record(login, auth_id):
+    return _get_second_factor_collection().remove({
+        'login': login,
+        'auth_id': auth_id,
+    })
+
+
 def _get_mongo_client():
     global _mongo_client
     if _mongo_client:
@@ -98,6 +125,17 @@ def _get_mongo_client():
     )
 
     return _mongo_client
+
+
+def _get_second_factor_collection():
+    client = _get_mongo_client()
+    collection = client[MONGO_DB_NAME]['second_factor']
+
+    collection.create_index([
+        ('auth_id', pymongo.ASCENDING),
+    ], background=True, unique=True, expireAfterSeconds=300)
+
+    return collection
 
 
 def _get_remote_addr_collection():

@@ -7,10 +7,12 @@ from authlib.jose.errors import BadSignatureError, DecodeError
 
 AUTH_DOMAIN = os.environ.get('AUTH_DOMAIN', 'http://127.0.0.1:5487')
 
+AUTH_DEV_MODE = os.getenv('AUTH_DEV_MODE') == '1'
+
 AUTH_COOKIE_NAME = '__Secure-Auth-Token'
 CSRF_COOKIE_NAME = '__Host-Csrf-Token'
 CSRF_FIELD_NAME = 'csrf_token'
-if os.getenv('AUTH_DEV_MODE') == '1':
+if AUTH_DEV_MODE:
     AUTH_COOKIE_NAME = 'Dev-Auth-Token'
     CSRF_COOKIE_NAME = 'Dev-Csrf-Token'
 

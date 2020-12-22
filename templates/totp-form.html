@@ -1,0 +1,26 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+    <!-- Page: TOTP form -->
+    <section class="auth-form-wrapper">
+        <form method="POST" class="auth-form" action="{{ url_for('submit_totp') }}">
+            <h2 class="section-header">Enter one time password</h2>
+
+            <div class="auth-form__item">
+                <label for="password-input" class="visually-hidden">One time password</label>
+                <input id="password-input" name="password" type="number" autocomplete="off" placeholder="Code"
+                       required class="auth-form__input auth-form__input_otp">
+            </div>
+
+            <div class="auth-form__item">
+                <button type="submit"
+                        class="button auth-form__button auth-form__button_submit">Auth</button>
+            </div>
+
+            <input type="hidden" name="return-path" value="{{ return_path }}">
+            <input type="hidden" name="login" value="{{ login }}">
+            <input type="hidden" name="auth_id" value="{{ auth_id }}">
+            <input type="hidden" name="{{ csrf_field_name }}" value="{{ csrf_token }}">
+        </form>
+    </section>
+{% endblock %}
