@@ -6,8 +6,8 @@
   vars:
     container_name: auth487
     network_name: auth487_net
-    mongo_name: common-mongo
     service_port: 10400
+    secret_dir: '{{ playbook_dir }}/../.secret'
 
   tasks:
     - name: Check SSL certificates
@@ -80,22 +80,22 @@
 
     - name: Setup auth info file
       copy:
-        src: ~/.private/auth487/auth-info.json
+        src: '{{ secret_dir }}/auth_info/auth_info.json'
         dest: /etc/auth487/auth-info.json
 
     - name: Setup private key
       copy:
-        src: ~/.private/auth487/auth_key.pem
+        src: '{{ secret_dir }}/auth_info/auth_key.pem'
         dest: /etc/auth487/auth_key.pem
 
     - name: Setup public key
       copy:
-        src: ~/.private/auth487/auth_key.pub.pem
+        src: '{{ secret_dir }}/auth_info/auth_key.pub.pem'
         dest: /etc/auth487/auth_key.pub.pem
 
     - name: Setup Gmail credentials file
       copy:
-        src: ~/.private/gmail-sender/credentials.json
+        src: '{{ secret_dir }}/gmail_sender/credentials.json'
         dest: /etc/auth487/gmail_credentials.json
 
     - name: Update image
@@ -115,13 +115,13 @@
           --name {{ container_name }} \
           -v "/etc/auth487:/etc/auth487" \
           -v "/usr/local/share/ca-certificates:/usr/local/share/ca-certificates" \
-          -e "MONGO_HOST={{ lookup('file', '~/.private/services/mongo/shared/hosts') }}" \
-          -e "MONGO_PORT={{ lookup('file', '~/.private/services/mongo/shared/port') }}" \
-          -e "MONGO_REPLICA_SET={{ lookup('file', '~/.private/services/mongo/shared/replica_set') }}" \
-          -e "MONGO_SSL_CERT={{ lookup('file', '~/.private/services/mongo/shared/ssl_cert') }}" \
-          -e "MONGO_USER={{ lookup('file', '~/.private/services/mongo/shared/user') }}" \
-          -e "MONGO_PASSWORD={{ lookup('file', '~/.private/services/mongo/shared/password') }}" \
-          -e "MONGO_AUTH_SOURCE={{ lookup('file', '~/.private/services/mongo/shared/auth_src') }}" \
+          -e "MONGO_HOST={{ lookup('file', '{{ secret_dir }}/mongo/hosts') }}" \
+          -e "MONGO_PORT={{ lookup('file', '{{ secret_dir }}/mongo/port') }}" \
+          -e "MONGO_REPLICA_SET={{ lookup('file', '{{ secret_dir }}/mongo/replica_set') }}" \
+          -e "MONGO_SSL_CERT={{ lookup('file', '{{ secret_dir }}/mongo/ssl_cert') }}" \
+          -e "MONGO_USER={{ lookup('file', '{{ secret_dir }}/mongo/user') }}" \
+          -e "MONGO_PASSWORD={{ lookup('file', '{{ secret_dir }}/mongo/password') }}" \
+          -e "MONGO_AUTH_SOURCE={{ lookup('file', '{{ secret_dir }}/mongo/auth_src') }}" \
           -e "AUTH_PRIVATE_KEY_FILE=/etc/auth487/auth_key.pem" \
           -e "AUTH_PUBLIC_KEY_FILE=/etc/auth487/auth_key.pub.pem" \
           -e "AUTH_DOMAIN={{ auth_domain }}" \

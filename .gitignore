@@ -4,3 +4,4 @@ __pycache__
 *.retry
 *.egg-info
 dist
+.secret
