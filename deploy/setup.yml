@@ -140,7 +140,7 @@
           -e "MONGO_USER=/etc/auth487/mongo/user" \
           -e "MONGO_PASSWORD=/etc/auth487/mongo/password" \
           -e "MONGO_AUTH_SOURCE=/etc/auth487/mongo/auth_src" \
-          -e "MONGO_DB=auth487" \
+          -e "MONGO_DB_NAME=auth487" \
           -e "AUTH_PRIVATE_KEY_FILE=/etc/auth487/auth_key.pem" \
           -e "AUTH_PUBLIC_KEY_FILE=/etc/auth487/auth_key.pub.pem" \
           -e "AUTH_DOMAIN={{ auth_domain }}" \

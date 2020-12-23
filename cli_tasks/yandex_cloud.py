@@ -55,7 +55,7 @@ def get_yc():
 
     logging.info('Get Yandex Cloud tool')
     try:
-        _yc = str(subprocess.check_output(('which', 'yc1')).strip(), 'utf-8')
+        _yc = str(subprocess.check_output(('which', 'yc')).strip(), 'utf-8')
     except subprocess.CalledProcessError:
         logging.warning('Try to install and setup yc: https://clck.ru/Sak4W')
         raise
