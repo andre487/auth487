@@ -18,4 +18,4 @@ deploy
 tasks.py
 test_data
 Dockerfile
-auth487/setup.py
+lib/setup.py
