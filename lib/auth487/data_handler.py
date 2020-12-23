@@ -6,20 +6,32 @@ import pyotp
 import pymongo
 from .common import AUTH_DEV_MODE
 
+
+def get_env_param(name, def_val=None, try_file=False):
+    val = os.getenv(name, def_val)
+
+    if try_file and val and os.path.isfile(val):
+        with open(val) as fp:
+            return fp.read().strip()
+
+    return val
+
+
 CONNECT_TIMEOUT = 500
-AUTH_MISTAKES_TO_BAN = int(os.environ.get('AUTH_MISTAKES_TO_BAN', 10))
-AUTH_BAN_TIME = int(os.environ.get('AUTH_BAN_TIME', 60))
+AUTH_MISTAKES_TO_BAN = int(get_env_param('AUTH_MISTAKES_TO_BAN', '10'))
+AUTH_BAN_TIME = int(get_env_param('AUTH_BAN_TIME', '60'))
 
-MONGO_HOST = os.environ.get('MONGO_HOST', 'localhost')
-MONGO_PORT = int(os.environ.get('MONGO_PORT', 27017))
+MONGO_HOST = get_env_param('MONGO_HOST', 'localhost', try_file=True)
+MONGO_PORT = int(get_env_param('MONGO_PORT', '27017', try_file=True))
 
-MONGO_REPLICA_SET = os.environ.get('MONGO_REPLICA_SET')
-MONGO_SSL_CERT = os.environ.get('MONGO_SSL_CERT')
+MONGO_REPLICA_SET = get_env_param('MONGO_REPLICA_SET', try_file=True)
+MONGO_SSL_CERT = get_env_param('MONGO_SSL_CERT', try_file=True)
 
-MONGO_USER = os.environ.get('MONGO_USER')
-MONGO_PASSWORD = os.environ.get('MONGO_PASSWORD')
-MONGO_AUTH_SOURCE = os.environ.get('MONGO_AUTH_SOURCE')
-MONGO_DB_NAME = os.environ.get('MONGO_DB_NAME', 'auth487')
+MONGO_USER = get_env_param('MONGO_USER', try_file=True)
+MONGO_PASSWORD = get_env_param('MONGO_PASSWORD', try_file=True)
+MONGO_AUTH_SOURCE = get_env_param('MONGO_AUTH_SOURCE', try_file=True)
+
+MONGO_DB_NAME = get_env_param('MONGO_DB_NAME', 'auth487')
 
 _mongo_client = None
 
