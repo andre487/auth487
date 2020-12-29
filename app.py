@@ -167,6 +167,17 @@ def get_public_key():
     return flask.Response(PUBLIC_KEY, headers={'Content-Type': 'text/plain; charset=utf-8'})
 
 
+@app.route('/robots.txt')
+def robots_txt():
+    return flask.Response(
+        response=(
+            'User-Agent: *\n'
+            'Disallow: /'
+        ),
+        headers={'Content-Type': 'text/plain; charset=utf-8'}
+    )
+
+
 def make_template_response(template, **kwargs):
     resp = make_response(**kwargs)
 
