@@ -1,4 +1,3 @@
-import os
 import cli_tasks
 from cli_tasks import common
 from invoke import task

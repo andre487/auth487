@@ -6,7 +6,6 @@
   vars:
     container_name: auth487
     network_name: auth487_net
-    service_port: 10400
     secret_dir: '{{ playbook_dir }}/../.secret'
 
   tasks:
