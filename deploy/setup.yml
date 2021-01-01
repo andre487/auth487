@@ -41,7 +41,7 @@
           -d {{ http_domain }} \
           -n \
           --agree-tos \
-          -m '{{ admin_email }}'
+          -m '{{ cert_email }}'
       when: nginx_ssl_result.stat.exists == False
       register: certificate_res
 
