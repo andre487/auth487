@@ -64,6 +64,12 @@ def prepare_secrets(c, recreate_venv=False, no_secret_cache=False):
 
 
 @task
+def create_local_venv(c, rebuild_venv=False):
+    """Prepare .venv dir for using in IDE"""
+    common.prepare_virtual_env(c, rebuild_venv)
+
+
+@task
 def make_deploy(c, recreate_venv=False, no_secret_cache=False):
     """Deploy current work dir to production"""
     cli_tasks.run_linters.run(c, recreate_venv)
