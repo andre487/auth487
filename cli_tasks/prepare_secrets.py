@@ -4,7 +4,7 @@ from . import common, yandex_cloud
 
 SECRETS = {
     'auth_info': 'e6q6vfo2vo565h0cb0nq',
-    'mongo': 'e6q0nap2vdn3v6u9r7h8',
+    'mongo': 'e6qi9pel32r3mjoks1bj',
     'gmail_sender': 'e6qar6a7mkjfu29vpv7b',
 }
 

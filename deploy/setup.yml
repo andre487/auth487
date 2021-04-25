@@ -107,7 +107,7 @@
         - hosts
         - port
         - replica_set
-        - auth_src
+        - auth_source
         - ssl_cert
         - user
         - password
@@ -157,7 +157,7 @@
           MONGO_SSL_CERT: /etc/auth487/mongo/ssl_cert
           MONGO_USER: /etc/auth487/mongo/user
           MONGO_PASSWORD: /etc/auth487/mongo/password
-          MONGO_AUTH_SOURCE: /etc/auth487/mongo/auth_src
+          MONGO_AUTH_SOURCE: /etc/auth487/mongo/auth_source
           MONGO_DB_NAME: auth487
           AUTH_DOMAIN: '{{ auth_domain }}'
           AUTH_PRIVATE_KEY_FILE: /etc/auth487/auth_key.pem
