@@ -104,7 +104,7 @@
         src: '{{ secret_dir }}/mongo/{{ item }}'
         dest: /etc/auth487/mongo/{{ item }}
       with_items:
-        - hosts
+        - host
         - port
         - replica_set
         - auth_source
@@ -151,7 +151,7 @@
         ports:
           - '127.0.0.1:{{ service_port }}:5000'
         env:
-          MONGO_HOST: /etc/auth487/mongo/hosts
+          MONGO_HOST: /etc/auth487/mongo/host
           MONGO_PORT: /etc/auth487/mongo/port
           MONGO_REPLICA_SET: /etc/auth487/mongo/replica_set
           MONGO_SSL_CERT: /etc/auth487/mongo/ssl_cert
