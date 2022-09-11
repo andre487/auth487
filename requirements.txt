@@ -5,7 +5,7 @@ certifi==2020.12.5
 cffi==1.14.4
 chardet==4.0.0
 click==7.1.2
-cryptography==3.3.2
+cryptography==38.0.1
 flake8==3.8.4
 Flask==1.1.2
 google-api-core==1.24.1
@@ -47,5 +47,5 @@ ua-parser==0.10.0
 uritemplate==3.0.1
 urllib3==1.26.5
 user-agents==2.2.0
-uWSGI==2.0.19.1
+uWSGI==2.0.20
 Werkzeug==1.0.1

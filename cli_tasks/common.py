@@ -42,8 +42,7 @@ def prepare_virtual_env(c, recreate_venv):
         else:
             return
 
-    c.run(f'python3 -m virtualenv --always-copy --download {VENV_DIR}')
-    c.run(f'{PYTHON} -m pip install --upgrade pip')
+    c.run(f'python3 -m venv --copies --upgrade-deps --clear {VENV_DIR}')
     c.run(f'{PYTHON} -m pip install -r {PROJECT_DIR}/requirements.txt')
 
 
