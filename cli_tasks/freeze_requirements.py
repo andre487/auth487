@@ -13,7 +13,7 @@ def run(c, recreate_venv):
             if not req or req.startswith('#'):
                 continue
 
-            code_parts.append(f"'{req.strip()}'")
+            code_parts.append(f"'{req.strip().replace('==', '>=')}'")
 
     req_text = ', '.join(code_parts)
 
