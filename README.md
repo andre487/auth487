@@ -20,3 +20,8 @@ export GMAIL_CREDENTIALS_FILE=/path/to/service/account/credentials.json
 
 python3 -m invoke run-dev
 ```
+
+## Test auth
+
+Password: `test`
+TOTP: `./.venv/bin/python3 -m invoke create-test-otp [--user USER]`

@@ -10,6 +10,12 @@ def run_dev(c, port=5487, recreate_venv=False):
 
 
 @task
+def create_test_otp(c, user='test'):
+    """Create one-time password for test users"""
+    cli_tasks.create_test_otp.run(c, user)
+
+
+@task
 def lint(c, recreate_venv=False):
     """Run flake8"""
     cli_tasks.run_linters.run(c, recreate_venv)
