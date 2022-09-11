@@ -8,7 +8,7 @@ def run(_):
 
     docker = common.get_docker()
     subprocess.check_call((
-        docker, 'build',
+        docker, 'buildx', 'build', '--platform', 'linux/amd64', '--load',
         '-t', common.DOCKER_IMAGE_NAME,
         '--force-rm', '.',
     ))
