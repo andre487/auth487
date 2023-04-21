@@ -131,7 +131,7 @@ def _get_mongo_client():
         connect=True,
         username=MONGO_USER,
         password=MONGO_PASSWORD,
-        ssl_ca_certs=MONGO_SSL_CERT,
+        tlsCAFile=MONGO_SSL_CERT,
         ssl_cert_reqs=ssl.CERT_REQUIRED if MONGO_SSL_CERT else ssl.CERT_NONE,
         **mongo_options
     )
