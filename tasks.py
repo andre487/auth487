@@ -55,6 +55,13 @@ def create_test_otp(c, user='test'):
 
 
 @task
+def create_prod_otp(c, user='test'):
+    """Create one-time password for test users"""
+    cli_tasks.prepare_secrets.run(c, recreate_venv=False, no_secret_cache=False, silent=True)
+    cli_tasks.create_prod_otp.run(c, user)
+
+
+@task
 def lint(c, recreate_venv=False):
     """Run flake8"""
     cli_tasks.run_linters.run(c, recreate_venv)
