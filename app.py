@@ -1,12 +1,14 @@
-import hashlib
 import json
 import logging
 import os
-import flask
-import mail
-import pyotp
-import templating
 from datetime import datetime, timedelta
+
+import flask
+import pyotp
+
+import app_common
+import mail
+import templating
 from lib.auth487 import flask as ath, common as acm, data_handler
 from lib.auth487.common import create_auth_token, PRIVATE_KEY, PUBLIC_KEY
 
@@ -81,7 +83,7 @@ def login():
     if not auth_data:
         return flask.Response('User is not found', status=403)
 
-    actual_password_hash = hashlib.sha512(password.encode('utf-8')).hexdigest()
+    actual_password_hash = app_common.hash_password(password)
     auth_id = data_handler.create_second_factor_record(login, auth_data, actual_password_hash)
 
     headers = {}

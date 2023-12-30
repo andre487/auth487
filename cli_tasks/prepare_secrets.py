@@ -9,11 +9,12 @@ SECRETS = {
 }
 
 
-def run(c, recreate_venv, no_secret_cache=False):
+def run(c, recreate_venv, no_secret_cache=False, silent=False):
     common.prepare_virtual_env(c, recreate_venv)
 
     if not no_secret_cache and os.path.exists(common.SECRET_DIR):
-        logging.info('Has secret data, use --no-secret-cache to renew')
+        if not silent:
+            logging.info('Has secret data, use --no-secret-cache to renew')
         return
 
     for secret_name, secret_id in SECRETS.items():
