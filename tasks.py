@@ -127,7 +127,4 @@ def make_deploy(c, recreate_venv=False, no_secret_cache=False):
     cli_tasks.docker_test.run(c, recreate_venv)
     cli_tasks.docker_push.run(c)
 
-    c.run(
-        f'ansible-playbook '
-        f'{common.PROJECT_DIR}/deploy/setup.yml'
-    )
+    sp.check_call(('ansible-playbook', f'{common.PROJECT_DIR}/deploy/setup.yml'))
