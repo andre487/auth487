@@ -83,7 +83,7 @@ def create_auth_token(login, auth_data, private_key):
         'login': login,
         'access': auth_data['access'],
     }
-    return jwt.encode(header, payload, private_key)
+    return jwt.encode(header, payload, private_key).decode('utf8')
 
 
 def _raise_not_implemented():
