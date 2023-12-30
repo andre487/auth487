@@ -1,6 +1,14 @@
+import subprocess as sp
+
 import cli_tasks
 from cli_tasks import common
 from invoke import task
+
+
+@task
+def start_docker(_c):
+    """Run Docker via Colima"""
+    sp.check_call(('colima', 'start', '--arch', 'x86_64'))
 
 
 @task
