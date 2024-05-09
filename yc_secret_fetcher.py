@@ -78,9 +78,9 @@ def get_secrets(secrets_dir: str, meta_service: str, dev_run: bool) -> None:
                 logger.info('Secret %s:%s already exists and not changed', sec_name, sec_item)
             else:
                 if ex_file:
-                    logger.info('Secret %s:%s does not exist, saving new', sec_name, sec_item)
+                    logger.info('Secret %s:%s changed, rewriting', sec_name, sec_item)
                 else:
-                    logger.info('Secret %s:%s changed, saving new', sec_name, sec_item)
+                    logger.info('Secret %s:%s does not exist, creating', sec_name, sec_item)
                 with open(sec_file, 'wb') as fp:
                     fp.write(sec_val)
                 os.chmod(sec_file, 0o600)
