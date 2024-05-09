@@ -83,6 +83,12 @@ def start_docker_instance(
     if as_daemon:
         daemon_arg = ['-d']
 
+    email_vars = []
+    if val := os.getenv('NOTIFICATION_EMAIL_FROM'):
+        email_vars.extend(('-e', f'NOTIFICATION_EMAIL_FROM={val}'))
+    if val := os.getenv('NOTIFICATION_EMAIL_TO'):
+        email_vars.extend(('-e', f'NOTIFICATION_EMAIL_TO={val}'))
+
     cont_id = subprocess.check_output((
         docker, 'run', *daemon_arg, '--rm', '--name', DOCKER_APP_NAME,
         '--link', DOCKER_MONGO_NAME,
@@ -99,8 +105,10 @@ def start_docker_instance(
         '-e', f'MONGO_HOST={DOCKER_MONGO_NAME}',
         '-e', f'MONGO_DB_NAME={db_name}',
         '-e', 'SECRETS_DIR=/opt/secrets',
+        '-e', 'GMAIL_CREDENTIALS_FILE=/opt/secrets/gmail_sender/credentials.json',
         '-e', 'SECRETS_DEV_RUN=1',
         '-e', f'IAM_TOKEN={iam_token}',
+        *email_vars,
         DOCKER_IMAGE_NAME,
     )).strip()
 
