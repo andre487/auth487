@@ -6,7 +6,6 @@ from authlib.jose import jwt
 from authlib.jose.errors import BadSignatureError, DecodeError
 
 AUTH_DOMAIN = os.environ.get('AUTH_DOMAIN', 'http://127.0.0.1:5487')
-
 AUTH_DEV_MODE = os.getenv('AUTH_DEV_MODE') == '1'
 
 AUTH_COOKIE_NAME = '__Secure-Auth-Token'
@@ -16,36 +15,31 @@ if AUTH_DEV_MODE:
     AUTH_COOKIE_NAME = 'Dev-Auth-Token'
     CSRF_COOKIE_NAME = 'Dev-Csrf-Token'
 
-PRIVATE_KEY_FILE = os.environ.get('AUTH_PRIVATE_KEY_FILE')
 PUBLIC_KEY_FILE = os.environ.get('AUTH_PUBLIC_KEY_FILE')
-
-PRIVATE_KEY = None
-if PRIVATE_KEY_FILE:
-    with open(PRIVATE_KEY_FILE) as fp:
-        PRIVATE_KEY = fp.read()
-
-PUBLIC_KEY = None
-if PUBLIC_KEY_FILE:
-    with open(PUBLIC_KEY_FILE) as fp:
-        PUBLIC_KEY = fp.read()
-
-PUBLIC_KEY_CACHE_TIME = 300
+PUBLIC_KEY_CACHE_TIME = 15
 
 _public_key_cache = None
 _public_key_time = 0
 
 
 def get_public_key():
-    if PUBLIC_KEY is not None:
-        return PUBLIC_KEY
+    if public_key := _get_public_key_from_fs():
+        return public_key
+    return _download_public_key()
 
-    return download_public_key()
+
+def _get_public_key_from_fs():
+    if not PUBLIC_KEY_FILE:
+        return None
+
+    with open(PUBLIC_KEY_FILE) as fp:
+        return fp.read()
 
 
-def download_public_key():
+def _download_public_key():
     global _public_key_cache, _public_key_time
 
-    now = datetime.utcnow().timestamp()
+    now = datetime.now(tz=UTC).timestamp()
     if now - _public_key_time <= PUBLIC_KEY_CACHE_TIME:
         return _public_key_cache
 

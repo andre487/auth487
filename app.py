@@ -1,7 +1,7 @@
 import json
 import logging
 import os
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import flask
 import pyotp
@@ -9,20 +9,16 @@ import pyotp
 import app_common
 import mail
 import templating
-from lib.auth487 import flask as ath, common as acm, data_handler
-from lib.auth487.common import create_auth_token, PRIVATE_KEY, PUBLIC_KEY
+from lib.auth487 import common as acm, data_handler, flask as ath
 
 AUTH_INFO_FILE = os.getenv('AUTH_INFO_FILE')
+if not AUTH_INFO_FILE:
+    raise EnvironmentError('You should pass auth file via AUTH_INFO_FILE environment variable')
 
-assert PRIVATE_KEY, 'You should pass existing secret via AUTH_PRIVATE_KEY_FILE environment variable'
-assert PUBLIC_KEY, 'You should pass existing secret via AUTH_PUBLIC_KEY_FILE environment variable'
+PRIVATE_KEY_FILE = os.environ.get('AUTH_PRIVATE_KEY_FILE')
+if not PRIVATE_KEY_FILE:
+    raise EnvironmentError('You should pass private key file via AUTH_PRIVATE_KEY_FILE environment variable')
 
-assert AUTH_INFO_FILE, 'You should pass auth file via AUTH_INFO_FILE environment variable'
-
-with open(AUTH_INFO_FILE) as fp:
-    AUTH_INFO_DATA = json.load(fp)
-
-# noinspection SpellCheckingInspection
 LOG_FORMAT = '%(asctime)s %(levelname)s\t%(message)s\t%(pathname)s:%(lineno)d %(funcName)s %(process)d %(threadName)s'
 LOG_LEVEL = os.environ.get('LOG_LEVEL', logging.INFO)
 
@@ -52,7 +48,6 @@ def before_request():
 def index():
     return_path = flask.request.args.get('return-path', flask.url_for('index'))
 
-    # noinspection PyArgumentList
     if ath.is_authenticated():
         auth_token = ath.get_auth_token()
         auth_info = acm.extract_auth_info(auth_token)
@@ -79,7 +74,7 @@ def login():
     if not login or not password:
         return flask.Response('No auth info', status=400)
 
-    auth_data = AUTH_INFO_DATA.get(login)
+    auth_data = get_auth_info_data().get(login)
     if not auth_data:
         return flask.Response('User is not found', status=403)
 
@@ -108,7 +103,7 @@ def submit_totp():
     if not login or not password or not auth_id:
         return flask.Response('No auth info', status=400)
 
-    auth_data = AUTH_INFO_DATA.get(login)
+    auth_data = get_auth_info_data().get(login)
     if not auth_data:
         return flask.Response('User is not found', status=403)
 
@@ -131,11 +126,11 @@ def submit_totp():
     resp = flask.redirect(return_path, code=302)
     mail.send_new_login_notification(flask.request, resp)
 
-    auth_token = create_auth_token(login, auth_data, PRIVATE_KEY)
-    expires = datetime.now() + timedelta(days=30)
+    auth_token = acm.create_auth_token(login, auth_data, get_private_key())
+    exp_days = auth_data.get('expiration_days', 1)
+    expires = datetime.now(tz=UTC) + timedelta(days=exp_days)
     domain = None if app.debug else acm.AUTH_DOMAIN
 
-    # noinspection PyTypeChecker
     resp.set_cookie(
         acm.AUTH_COOKIE_NAME, auth_token, expires=expires,
         domain=domain, httponly=True, secure=not app.debug,
@@ -154,7 +149,6 @@ def logout():
     domain = None if app.debug else acm.AUTH_DOMAIN
 
     resp = flask.redirect(return_path, code=302)
-    # noinspection PyTypeChecker
     resp.set_cookie(
         acm.AUTH_COOKIE_NAME, auth_token, expires=expires,
         domain=domain, httponly=True, secure=not app.debug,
@@ -166,7 +160,7 @@ def logout():
 @app.route('/get-public-key')
 @ath.protected_from_brute_force
 def get_public_key():
-    return flask.Response(PUBLIC_KEY, headers={'Content-Type': 'text/plain; charset=utf-8'})
+    return flask.Response(acm.get_public_key(), headers={'Content-Type': 'text/plain; charset=utf-8'})
 
 
 @app.route('/robots.txt')
@@ -220,3 +214,13 @@ def make_response(base_resp=None, http_headers=None, **_):
     )
 
     return base_resp
+
+
+def get_private_key():
+    with open(PRIVATE_KEY_FILE) as fp:
+        fp.read()
+
+
+def get_auth_info_data():
+    with open(AUTH_INFO_FILE) as fp:
+        return json.load(fp)
