@@ -15,8 +15,6 @@ NOTIFICATION_EMAIL_FROM = os.getenv('NOTIFICATION_EMAIL_FROM')
 NOTIFICATION_EMAIL_TO = os.getenv('NOTIFICATION_EMAIL_TO')
 GMAIL_CREDENTIALS_FILE = os.getenv('GMAIL_CREDENTIALS_FILE')
 
-_cred_cache = {}
-
 
 def send_new_login_notification(request, response):
     remote_addr = get_remote_addr(request)
@@ -51,17 +49,11 @@ def is_enabled():
 
 
 def create_gmail_send_service():
-    cache_key = (GMAIL_CREDENTIALS_FILE, NOTIFICATION_EMAIL_FROM)
-    if cache_key in _cred_cache:
-        return _cred_cache[cache_key]
-
-    scopes = ['https://www.googleapis.com/auth/gmail.send']
-
-    credentials = service_account.Credentials.from_service_account_file(GMAIL_CREDENTIALS_FILE, scopes=scopes)
-    delegated_credentials = credentials.with_subject(NOTIFICATION_EMAIL_FROM)
-
-    service = _cred_cache[cache_key] = build('gmail', 'v1', credentials=delegated_credentials, cache_discovery=False)
-    return service
+    credentials = service_account.Credentials.from_service_account_file(
+        GMAIL_CREDENTIALS_FILE,
+        scopes=['https://www.googleapis.com/auth/gmail.send'],
+    ).with_subject(NOTIFICATION_EMAIL_FROM)
+    return build('gmail', 'v1', credentials=credentials, cache_discovery=False)
 
 
 def create_message(subject, message_text):
