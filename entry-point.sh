@@ -5,7 +5,7 @@ proj_dir="$(cd "$(dirname "$0")" && pwd)"
 cd "$proj_dir"
 
 cpu_count="$(getconf _NPROCESSORS_ONLN)"
-worker_count="$(($cpu_count * 2))"
+worker_count="$((cpu_count * 2))"
 
 uwsgi --http '0.0.0.0:5000' \
     --workers "$worker_count" \
@@ -14,4 +14,5 @@ uwsgi --http '0.0.0.0:5000' \
     --no-orphans \
     --wsgi-file app.py \
     --callable app \
+    --die-on-term \
     --static-map /static="$proj_dir/static"
