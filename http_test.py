@@ -1,23 +1,36 @@
 import json
 import os
+from urllib import parse as url_parse
+
 import pyotp
 import requests
-from urllib import parse as url_parse
+
 from cli_tasks import common
 from lib.auth487 import common as acm
 
 APP_PORT = int(os.getenv('APP_PORT', 8080))
-AUTH_INFO_FILE = os.path.join(os.path.dirname(__file__), 'test_data', 'test-auth-info.json')
+
+TEST_DATA_DIR = os.path.join(os.path.dirname(__file__), 'test_data')
+AUTH_INFO_FILE = os.path.join(TEST_DATA_DIR, 'test-auth-info.json')
+PRIVATE_KEY_FILE = os.path.join(TEST_DATA_DIR, 'auth_keys', 'auth_key.pem')
 
 with open(AUTH_INFO_FILE) as fp:
     AUTH_INFO_DATA = json.load(fp)
+
+with open(PRIVATE_KEY_FILE) as fp:
+    PRIVATE_KEY = fp.read()
+
+
+def generate_auth_token(login='test'):
+    auth_data = AUTH_INFO_DATA[login]
+    return acm.create_auth_token(login, auth_data, PRIVATE_KEY)
 
 
 def make_app_request(handler, method='GET', data=None, headers=None, cookies=None, set_token=True):
     if cookies is None:
         cookies = {}
 
-    auth_token = common.get_auth_token()
+    auth_token = generate_auth_token()
     url = f'http://127.0.0.1:{APP_PORT}{handler}'
 
     if set_token:
@@ -355,5 +368,5 @@ class TestGetPublicKey:
         assert res.status_code == 200
         assert res.headers['content-type'] == 'text/plain; charset=utf-8'
 
-        assert '-----BEGIN RSA PUBLIC KEY-----' in res.text
-        assert '-----END RSA PUBLIC KEY-----' in res.text
+        assert '-----BEGIN PUBLIC KEY-----' in res.text
+        assert '-----END PUBLIC KEY-----' in res.text

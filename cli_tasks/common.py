@@ -210,12 +210,6 @@ def drop_db(db_name):
     })
 
 
-def get_auth_token():
-    token_file = os.path.join(TEST_DATA_DIR, 'test-auth-token.txt')
-    with open(token_file) as fp:
-        return fp.read().strip()
-
-
 def get_csrf_token():
     token_file = os.path.join(TEST_DATA_DIR, 'test-csrf-token.txt')
     with open(token_file) as fp:
