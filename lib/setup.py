@@ -9,7 +9,7 @@ requirements = [
 
 setuptools.setup(
     name='auth487',
-    version='1.0.0',
+    version='2.0.0',
     author='andre487',
     author_email='andrey.prokopyuk@gmail.com',
     description='Auth 487 library',
@@ -19,8 +19,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=requirements,
     classifiers=(
-        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.10',
         'License :: OSI Approved :: MIT License',
         'Operating System :: OS Independent',
     ),
+    python_requires='>=3.10',
 )
