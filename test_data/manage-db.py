@@ -11,7 +11,7 @@ MONGO_LOGIN = os.environ.get('MONGO_LOGIN')
 MONGO_PASSWORD = os.environ.get('MONGO_PASSWORD')
 MONGO_DB_NAME = os.environ.get('MONGO_DB_NAME', 'auth487_docker_test')
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s\t%(name)s\t%(message)s')
 
 
 def main():

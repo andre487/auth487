@@ -1,22 +1,20 @@
 #!/usr/bin/env bash
-set -exo pipefail
+set -eufxo pipefail
+cd "$(dirname "$0")"
 
-proj_dir="$(cd "$(dirname "$0")" && pwd)"
-cd "$proj_dir"
-
-cpu_count="$(getconf _NPROCESSORS_ONLN)"
-worker_count="$((cpu_count * 2))"
+export PYTHONDONTWRITEBYTECODE=1
 
 if [[ -z "$SECRETS_DIR" ]]; then
     echo "No secret dir"
     exit 1
 fi
 
-run_arg=()
+YC_SECRET_RUN_ARG=''
 if [[ "$SECRETS_DEV_RUN" == 1 ]]; then
-    run_arg=(--dev-run)
+    YC_SECRET_RUN_ARG=--dev-run
 fi
+export YC_SECRET_RUN_ARG
 
-./yc_secret_fetcher.py once --secrets-dir "$SECRETS_DIR" "${run_arg[@]}"
+./yc_secret_fetcher.py once --secrets-dir "$SECRETS_DIR" "${YC_SECRET_RUN_ARG[@]}"
 
-./run_prod.py --address '0.0.0.0' --port 5000
+supervisord --configuration conf/supervisord.conf
