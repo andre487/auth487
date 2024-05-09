@@ -51,10 +51,6 @@ def is_remote_addr_clean(remote_addr):
 
 
 def mark_auth_mistake(remote_addr):
-    if not pymongo:
-        logging.warning("No MongoDB so can't mark auth mistake")
-        return
-
     _get_remote_addr_collection().update_one({'remote_addr': remote_addr}, {'$inc': {'mistakes': 1}}, upsert=True)
 
 
