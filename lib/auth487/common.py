@@ -1,4 +1,6 @@
+import enum
 import os
+import typing
 from datetime import UTC, datetime, timedelta
 from urllib import request
 
@@ -28,6 +30,80 @@ def get_public_key():
     return _download_public_key()
 
 
+def is_authenticated(get_auth_token):
+    auth_data = check_auth_info_from_token(get_auth_token)
+    return auth_data.decline_reason == AuthTokenDeclineReason.NONE
+
+
+class AuthTokenDeclineReason(enum.StrEnum):
+    NONE = enum.auto()
+    NO_TOKEN = enum.auto()
+    NO_ACCESS = enum.auto()
+    INVALID_TOKEN = enum.auto()
+    IAT_INVALID = enum.auto()
+    NBF_INVALID = enum.auto()
+    EXP_INVALID = enum.auto()
+
+
+class AuthInfoData(typing.NamedTuple):
+    token: str | None = None
+    auth_info: dict | None = None
+    decline_reason: AuthTokenDeclineReason = AuthTokenDeclineReason.NONE
+
+
+def check_auth_info_from_token(get_auth_token, access=()):
+    auth_token = get_auth_token()
+    if not auth_token:
+        return AuthInfoData(decline_reason=AuthTokenDeclineReason.NO_TOKEN)
+
+    auth_info = _extract_auth_info(auth_token)
+    if not auth_info:
+        return AuthInfoData(decline_reason=AuthTokenDeclineReason.INVALID_TOKEN)
+
+    now = datetime.now(tz=UTC).timestamp()
+    if not (issued_at := auth_info.get('iat')) or issued_at > now:
+        return AuthInfoData(decline_reason=AuthTokenDeclineReason.IAT_INVALID)
+
+    if not (not_before := auth_info.get('nbf')) or not_before > now:
+        return AuthInfoData(decline_reason=AuthTokenDeclineReason.NBF_INVALID)
+
+    if not (expires := auth_info.get('exp')) or expires < now:
+        return AuthInfoData(decline_reason=AuthTokenDeclineReason.EXP_INVALID)
+
+    from .data_handler import has_access_to
+
+    for rule in access:
+        if not has_access_to(auth_info, rule):
+            return AuthInfoData(decline_reason=AuthTokenDeclineReason.NO_ACCESS)
+
+    return AuthInfoData(
+        token=auth_token,
+        auth_info=auth_info,
+    )
+
+
+def create_auth_token(login, auth_data, private_key):
+    if not private_key:
+        raise Exception('No private key')
+
+    now = datetime.now(tz=UTC)
+    now_ts = int(now.timestamp())
+
+    exp_days = auth_data.get('expiration_days', 1)
+    exp_ts = int((now + timedelta(days=exp_days)).timestamp())
+
+    header = {'alg': 'ES512'}
+    payload = {
+        'iat': now_ts,
+        'nbf': now_ts,
+        'exp': exp_ts,
+        'name': login,
+        'access': auth_data['access'],
+    }
+
+    return jwt.encode(header, payload, private_key).decode('utf8')
+
+
 def _get_public_key_from_fs():
     if not PUBLIC_KEY_FILE:
         return None
@@ -49,53 +125,13 @@ def _download_public_key():
     return _public_key_cache
 
 
-def extract_auth_info(auth_token):
+def _extract_auth_info(auth_token) -> dict[str, typing.Any] | None:
     try:
         claims = jwt.decode(auth_token, get_public_key())
     except (BadSignatureError, DecodeError, ValueError):
         return None
 
     return dict(claims)
-
-
-def has_credentials(get_auth_token):
-    return bool(get_auth_token())
-
-
-def is_authenticated(get_auth_token):
-    auth_token = get_auth_token()
-    if not auth_token:
-        return False
-
-    auth_info = extract_auth_info(auth_token)
-    return bool(auth_info)
-
-
-def get_auth_info_from_token(get_auth_token):
-    auth_token = get_auth_token()
-    if not auth_token:
-        return None
-
-    return extract_auth_info(auth_token)
-
-
-def create_auth_token(login, auth_data, private_key):
-    now = datetime.now(tz=UTC)
-    now_ts = int(now.timestamp())
-
-    exp_days = auth_data.get('expiration_days', 1)
-    exp_ts = int((now + timedelta(days=exp_days)).timestamp())
-
-    header = {'alg': 'ES512'}
-    payload = {
-        'iat': now_ts,
-        'nbf': now_ts,
-        'exp': exp_ts,
-        'name': login,
-        'access': auth_data['access'],
-    }
-
-    return jwt.encode(header, payload, private_key).decode('utf8')
 
 
 def _raise_not_implemented():

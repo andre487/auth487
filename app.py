@@ -50,14 +50,14 @@ def index():
 
     if ath.is_authenticated():
         auth_token = ath.get_auth_token()
-        auth_info = acm.extract_auth_info(auth_token)
-        banned_ips = data_handler.get_banned_addresses(auth_info)
-        banned_ips_authorized = data_handler.has_access_to(auth_info, 'banned_ips')
+        auth_data = ath.check_auth_info_from_token()
+        banned_ips = data_handler.get_banned_addresses(auth_data.auth_info)
+        banned_ips_authorized = data_handler.has_access_to(auth_data.auth_info, 'banned_ips')
 
         return make_template_response(
             'user-panel.html',
             return_path=return_path, banned_ips=banned_ips,
-            auth_token=auth_token, auth_info=auth_info,
+            auth_token=auth_token, auth_info=auth_data.auth_info,
             banned_ips_authorized=banned_ips_authorized,
         )
 
@@ -218,7 +218,7 @@ def make_response(base_resp=None, http_headers=None, **_):
 
 def get_private_key():
     with open(PRIVATE_KEY_FILE) as fp:
-        fp.read()
+        return fp.read()
 
 
 def get_auth_info_data():
