@@ -63,7 +63,12 @@ def start_dev_instance(port, db_name=DEV_DB_NAME, force_db_cleaning=False):
     )
 
 
-def start_docker_instance(port, db_name=DEV_DB_NAME, force_db_cleaning=False):
+def start_docker_instance(
+    port,
+    db_name=DEV_DB_NAME,
+    force_db_cleaning=False,
+    as_daemon=False,
+):
     logging.info('Starting Docker app instance')
     run_mongo(force_db_cleaning=force_db_cleaning, db_name=db_name)
 
@@ -72,8 +77,14 @@ def start_docker_instance(port, db_name=DEV_DB_NAME, force_db_cleaning=False):
     if cont_id:
         subprocess.check_call((docker, 'rm', '-f', cont_id))
 
+    iam_token = subprocess.check_output(('yc', 'iam', 'create-token'), encoding='utf8').strip()
+
+    daemon_arg = []
+    if as_daemon:
+        daemon_arg = ['-d']
+
     cont_id = subprocess.check_output((
-        docker, 'run', '-d', '--name', DOCKER_APP_NAME,
+        docker, 'run', *daemon_arg, '--name', DOCKER_APP_NAME,
         '--link', DOCKER_MONGO_NAME,
         '-p', f'127.0.0.1:{port}:5000',
         '-v', f'{TEST_DATA_DIR}:/opt/test_data',
@@ -87,6 +98,9 @@ def start_docker_instance(port, db_name=DEV_DB_NAME, force_db_cleaning=False):
         '-e', 'FLASK_DEBUG=1',
         '-e', f'MONGO_HOST={DOCKER_MONGO_NAME}',
         '-e', f'MONGO_DB_NAME={db_name}',
+        '-e', 'SECRETS_DIR=/opt/secrets',
+        '-e', 'SECRETS_DEV_RUN=1',
+        '-e', f'IAM_TOKEN={iam_token}',
         DOCKER_IMAGE_NAME,
     )).strip()
 

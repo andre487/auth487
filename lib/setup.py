@@ -4,6 +4,7 @@ requirements = [
     'Authlib>=1.3.0,<2',
     'pymongo>=4.7.2,<5',
     'pyotp>=2.9.0,<3',
+    'pytz>=2024.1',
 ]
 
 setuptools.setup(

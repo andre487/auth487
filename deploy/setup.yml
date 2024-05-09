@@ -151,19 +151,20 @@
         ports:
           - '127.0.0.1:{{ service_port }}:5000'
         env:
-          MONGO_HOST: /etc/auth487/mongo/host
-          MONGO_PORT: /etc/auth487/mongo/port
-          MONGO_REPLICA_SET: /etc/auth487/mongo/replica_set
-          MONGO_SSL_CERT: /etc/auth487/mongo/ssl_cert
-          MONGO_USER: /etc/auth487/mongo/user
-          MONGO_PASSWORD: /etc/auth487/mongo/password
-          MONGO_AUTH_SOURCE: /etc/auth487/mongo/auth_source
+          SECRETS_DIR: /opt/secrets
+          MONGO_HOST: /opt/secrets/mongo/host
+          MONGO_PORT: /opt/secrets/mongo/port
+          MONGO_REPLICA_SET: /opt/secrets/mongo/replica_set
+          MONGO_SSL_CERT: /opt/secrets/mongo/ssl_cert
+          MONGO_USER: /opt/secrets/mongo/user
+          MONGO_PASSWORD: /opt/secrets/mongo/password
+          MONGO_AUTH_SOURCE: /opt/secrets/mongo/auth_source
           MONGO_DB_NAME: auth487
           AUTH_DOMAIN: '{{ auth_domain }}'
-          AUTH_PRIVATE_KEY_FILE: /etc/auth487/auth_key.pem
-          AUTH_PUBLIC_KEY_FILE: /etc/auth487/auth_key.pub.pem
-          AUTH_INFO_FILE: /etc/auth487/auth-info.json
+          AUTH_PRIVATE_KEY_FILE: /opt/secrets/auth_info/auth_key.pem
+          AUTH_PUBLIC_KEY_FILE: /opt/secrets/auth_info/auth_key.pub.pem
+          AUTH_INFO_FILE: /opt/secrets/auth_info/auth-info.json
           NOTIFICATION_EMAIL_FROM: '{{ notification_from }}'
           NOTIFICATION_EMAIL_TO: '{{ notification_to }}'
-          GMAIL_CREDENTIALS_FILE: /etc/auth487/gmail_credentials.json
+          GMAIL_CREDENTIALS_FILE: /opt/secrets/gmail_sender/gmail_credentials.json
       when: docker_network.changed or docker_image.changed

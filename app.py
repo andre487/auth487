@@ -1,7 +1,8 @@
 import json
 import logging
 import os
-from datetime import UTC, datetime, timedelta
+import pytz
+from datetime import datetime, timedelta
 
 import flask
 import pyotp
@@ -128,7 +129,7 @@ def submit_totp():
 
     auth_token = acm.create_auth_token(login, auth_data, get_private_key())
     exp_days = auth_data.get('expiration_days', 1)
-    expires = datetime.now(tz=UTC) + timedelta(days=exp_days)
+    expires = datetime.now(tz=pytz.utc) + timedelta(days=exp_days)
     domain = None if app.debug else acm.AUTH_DOMAIN
 
     resp.set_cookie(

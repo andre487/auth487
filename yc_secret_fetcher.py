@@ -88,6 +88,8 @@ def get_secrets(secrets_dir: str, meta_service: str, dev_run: bool) -> None:
 
 def get_iam_token(meta_service: str, dev_run: bool):
     if dev_run:
+        if val := os.getenv('IAM_TOKEN'):
+            return val
         return sp.check_output(['yc', 'iam', 'create-token'], encoding='utf8').strip()
 
     url = f'http://{meta_service}/computeMetadata/v1/instance/service-accounts/default/token'

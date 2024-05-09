@@ -1,7 +1,8 @@
 import enum
 import os
+import pytz
 import typing
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 from urllib import request
 
 from authlib.jose import jwt
@@ -35,7 +36,7 @@ def is_authenticated(get_auth_token):
     return auth_data.decline_reason == AuthTokenDeclineReason.NONE
 
 
-class AuthTokenDeclineReason(enum.StrEnum):
+class AuthTokenDeclineReason(enum.Enum):
     NONE = enum.auto()
     NO_TOKEN = enum.auto()
     NO_ACCESS = enum.auto()
@@ -60,7 +61,7 @@ def check_auth_info_from_token(get_auth_token, access=()):
     if not auth_info:
         return AuthInfoData(decline_reason=AuthTokenDeclineReason.INVALID_TOKEN)
 
-    now = datetime.now(tz=UTC).timestamp()
+    now = datetime.now(tz=pytz.utc).timestamp()
     if not (issued_at := auth_info.get('iat')) or issued_at > now:
         return AuthInfoData(decline_reason=AuthTokenDeclineReason.IAT_INVALID)
 
@@ -86,7 +87,7 @@ def create_auth_token(login, auth_data, private_key):
     if not private_key:
         raise Exception('No private key')
 
-    now = datetime.now(tz=UTC)
+    now = datetime.now(tz=pytz.utc)
     now_ts = int(now.timestamp())
 
     exp_days = auth_data.get('expiration_days', 1)
@@ -115,7 +116,7 @@ def _get_public_key_from_fs():
 def _download_public_key():
     global _public_key_cache, _public_key_time
 
-    now = datetime.now(tz=UTC).timestamp()
+    now = datetime.now(tz=pytz.utc).timestamp()
     if now - _public_key_time <= PUBLIC_KEY_CACHE_TIME:
         return _public_key_cache
 
