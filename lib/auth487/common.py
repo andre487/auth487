@@ -77,6 +77,14 @@ def is_authenticated(get_auth_token):
     return bool(auth_info)
 
 
+def get_auth_info_from_token(get_auth_token):
+    auth_token = get_auth_token()
+    if not auth_token:
+        return None
+
+    return extract_auth_info(auth_token)
+
+
 def create_auth_token(login, auth_data, private_key):
     now = datetime.now(tz=UTC)
     now_ts = int(now.timestamp())

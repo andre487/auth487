@@ -1,9 +1,10 @@
 import logging
 import secrets
 import urllib.parse
+from datetime import UTC, datetime
 from functools import partial, wraps
-from . import common as acm
-from . import data_handler
+
+from . import common as acm, data_handler
 
 try:
     import flask
@@ -84,41 +85,65 @@ def get_remote_addr(request):
 
 
 def require_auth(auth_path=acm.AUTH_DOMAIN, return_route=None, no_redirect=False, access=()):
-    assert auth_path, 'You should provide auth path via AUTH_DOMAIN var or via argument'
+    if not auth_path:
+        raise Exception('You should provide auth path via AUTH_DOMAIN var or via argument')
 
     def require_auth_decorator(route_func):
-        nonlocal return_route
-        if return_route is None:
-            return_route = route_func.__name__
+        ret_route = return_route
+        if ret_route is None:
+            ret_route = route_func.__name__
 
         @wraps(route_func)
         def wrapped_route(*args, **kwargs):
-            # noinspection PyArgumentList
-            if not is_authenticated():
+            url_root = flask.request.url_root
+            if url_root.endswith('/'):
+                url_root = url_root[:-1]
+
+            return_url = urllib.parse.quote(
+                url_root +
+                flask.url_for(ret_route)
+            )
+
+            auth_url = (
+                auth_path +
+                ('&' if '?' in auth_path else '?') +
+                'return-path=' +
+                return_url
+            )
+
+            if not (auth_info := get_auth_info_from_token()):
                 if no_redirect:
                     return flask.Response(
                         '{"error": "Auth error"}', status=403,
                         headers={'Content-Type': 'application/json'},
                     )
-
-                url_root = flask.request.url_root
-                if url_root.endswith('/'):
-                    url_root = url_root[:-1]
-
-                return_url = urllib.parse.quote(
-                    url_root +
-                    flask.url_for(return_route)
-                )
-
-                auth_url = (
-                        auth_path +
-                        ('&' if '?' in auth_path else '?') +
-                        'return-path=' +
-                        return_url
-                )
                 return flask.redirect(auth_url, code=302)
 
-            auth_info = acm.extract_auth_info(get_auth_token())
+            now = datetime.now(tz=UTC).timestamp()
+            if not (issued_at := auth_info.get('iat')) or issued_at > now:
+                if no_redirect:
+                    return flask.Response(
+                        '{"error": "Token time is invalid"}', status=401,
+                        headers={'Content-Type': 'application/json'},
+                    )
+                return flask.redirect(auth_url, code=302)
+
+            if not (not_before := auth_info.get('nbf')) or not_before > now:
+                if no_redirect:
+                    return flask.Response(
+                        '{"error": "Token is too new"}', status=401,
+                        headers={'Content-Type': 'application/json'},
+                    )
+                return flask.redirect(auth_url, code=302)
+
+            if not (expires := auth_info.get('exp')) or expires < now:
+                if no_redirect:
+                    return flask.Response(
+                        '{"error": "Token is expired"}', status=401,
+                        headers={'Content-Type': 'application/json'},
+                    )
+                return flask.redirect(auth_url, code=302)
+
             has_access = True
             for rule in access:
                 has_access = has_access and data_handler.has_access_to(auth_info, rule)
@@ -139,3 +164,4 @@ def require_auth(auth_path=acm.AUTH_DOMAIN, return_route=None, no_redirect=False
 
 
 is_authenticated = partial(acm.is_authenticated, get_auth_token)
+get_auth_info_from_token = partial(acm.get_auth_info_from_token, get_auth_token)
