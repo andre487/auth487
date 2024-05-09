@@ -84,7 +84,7 @@ def get_remote_addr(request):
     return remote_addr
 
 
-def require_auth(auth_path=acm.AUTH_DOMAIN, return_route=None, no_redirect=False, access=()):
+def require_auth(auth_path=acm.AUTH_BASE_URL, return_route=None, no_redirect=False, access=()):
     if not auth_path:
         raise Exception('You should provide auth path via AUTH_DOMAIN var or via argument')
 

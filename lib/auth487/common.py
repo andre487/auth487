@@ -8,7 +8,7 @@ from urllib import request
 from authlib.jose import jwt
 from authlib.jose.errors import BadSignatureError, DecodeError
 
-AUTH_DOMAIN = os.environ.get('AUTH_DOMAIN', 'http://127.0.0.1:5487')
+AUTH_BASE_URL = os.getenv('AUTH_BASE_URL', 'http://127.0.0.1:5487')
 AUTH_DEV_MODE = os.getenv('AUTH_DEV_MODE') == '1'
 
 AUTH_COOKIE_NAME = '__Secure-Auth-Token'
@@ -120,7 +120,8 @@ def _download_public_key():
     if now - _public_key_time <= PUBLIC_KEY_CACHE_TIME:
         return _public_key_cache
 
-    _public_key_cache = request.urlopen(AUTH_DOMAIN + '/get-public-key').read()
+    with request.urlopen(AUTH_BASE_URL + '/get-public-key') as resp:
+        _public_key_cache = resp.read()
     _public_key_time = now
 
     return _public_key_cache

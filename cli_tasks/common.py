@@ -7,7 +7,7 @@ import socket
 import subprocess
 from functools import partial
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s\t%(name)s\t%(message)s')
 
 PROJECT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 VENV_DIR = os.path.join(PROJECT_DIR, '.venv')
@@ -84,7 +84,7 @@ def start_docker_instance(
         daemon_arg = ['-d']
 
     cont_id = subprocess.check_output((
-        docker, 'run', *daemon_arg, '--name', DOCKER_APP_NAME,
+        docker, 'run', *daemon_arg, '--rm', '--name', DOCKER_APP_NAME,
         '--link', DOCKER_MONGO_NAME,
         '-p', f'127.0.0.1:{port}:5000',
         '-v', f'{TEST_DATA_DIR}:/opt/test_data',

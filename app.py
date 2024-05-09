@@ -2,6 +2,7 @@ import json
 import logging.config
 import os
 import sys
+import urllib.parse
 from datetime import datetime, timedelta
 
 import flask
@@ -12,6 +13,8 @@ import app_common
 import mail
 import templating
 from lib.auth487 import common as acm, data_handler, flask as ath
+
+AUTH_DOMAIN = os.getenv('AUTH_DOMAIN', '127.0.0.1')
 
 AUTH_INFO_FILE = os.getenv('AUTH_INFO_FILE')
 if not AUTH_INFO_FILE:
@@ -65,6 +68,12 @@ def before_request():
 @ath.protected_from_brute_force
 def index():
     return_path = flask.request.args.get('return-path', flask.url_for('index'))
+    return_path_parts = urllib.parse.urlparse(return_path)
+    if return_path_parts.netloc and not return_path_parts.netloc.endswith(AUTH_DOMAIN):
+        return flask.Response(
+            '{"error": "Return path is invalid"}', status=400,
+            headers={'Content-Type': 'application/json'},
+        )
 
     if ath.is_authenticated():
         auth_token = ath.get_auth_token()
