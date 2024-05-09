@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from urllib import request
 
 from authlib.jose import jwt
@@ -58,7 +58,7 @@ def download_public_key():
 def extract_auth_info(auth_token):
     try:
         claims = jwt.decode(auth_token, get_public_key())
-    except (BadSignatureError, DecodeError):
+    except (BadSignatureError, DecodeError, ValueError):
         return None
 
     return dict(claims)
@@ -78,11 +78,21 @@ def is_authenticated(get_auth_token):
 
 
 def create_auth_token(login, auth_data, private_key):
-    header = {'alg': 'RS256'}
+    now = datetime.now(tz=UTC)
+    now_ts = int(now.timestamp())
+
+    exp_days = auth_data.get('expiration_days', 1)
+    exp_ts = int((now + timedelta(days=exp_days)).timestamp())
+
+    header = {'alg': 'ES512'}
     payload = {
-        'login': login,
+        'iat': now_ts,
+        'nbf': now_ts,
+        'exp': exp_ts,
+        'name': login,
         'access': auth_data['access'],
     }
+
     return jwt.encode(header, payload, private_key).decode('utf8')
 
 

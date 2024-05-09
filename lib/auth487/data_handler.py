@@ -1,9 +1,10 @@
 import logging
 import os
 import secrets
-import ssl
-import pyotp
+
 import pymongo
+import pyotp
+
 from .common import AUTH_DEV_MODE
 
 
@@ -37,10 +38,6 @@ _mongo_client = None
 
 
 def is_remote_addr_clean(remote_addr):
-    if not pymongo:
-        logging.warning('No MongoDB so remotes are always clean')
-        return True
-
     collection = _get_remote_addr_collection()
 
     addr_data = collection.find_one({'remote_addr': remote_addr})
@@ -58,11 +55,7 @@ def mark_auth_mistake(remote_addr):
         logging.warning("No MongoDB so can't mark auth mistake")
         return
 
-    collection = _get_remote_addr_collection()
-    result = collection.update({'remote_addr': remote_addr}, {'$inc': {'mistakes': 1}})
-
-    if not result['updatedExisting']:
-        collection.insert({'remote_addr': remote_addr, 'mistakes': 1})
+    _get_remote_addr_collection().update_one({'remote_addr': remote_addr}, {'$inc': {'mistakes': 1}}, upsert=True)
 
 
 def has_access_to(auth_info, service):
@@ -73,10 +66,6 @@ def get_banned_addresses(auth_info):
     if not has_access_to(auth_info, 'banned_ips'):
         return []
 
-    if not pymongo:
-        logging.warning('No MongoDB so banned addresses list is always empty')
-        return []
-
     collection = _get_remote_addr_collection()
 
     return [doc['remote_addr'] for doc in collection.find({})]
@@ -84,7 +73,7 @@ def get_banned_addresses(auth_info):
 
 def create_second_factor_record(login, auth_data, password_hash):
     auth_id = secrets.token_hex(32)
-    _get_second_factor_collection().insert({
+    _get_second_factor_collection().insert_one({
         'login': login,
         'auth_id': auth_id,
         'password_hash': password_hash,
@@ -105,7 +94,7 @@ def get_second_factor_record(login, auth_id):
 
 
 def remove_second_factor_record(login, auth_id):
-    return _get_second_factor_collection().remove({
+    return _get_second_factor_collection().delete_many({
         'login': login,
         'auth_id': auth_id,
     })
@@ -132,7 +121,6 @@ def _get_mongo_client():
         username=MONGO_USER,
         password=MONGO_PASSWORD,
         tlsCAFile=MONGO_SSL_CERT,
-        ssl_cert_reqs=ssl.CERT_REQUIRED if MONGO_SSL_CERT else ssl.CERT_NONE,
         **mongo_options
     )
 

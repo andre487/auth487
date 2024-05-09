@@ -2,6 +2,7 @@
 import os
 import shutil
 import sys
+
 sys.path.append(os.path.realpath(os.path.pardir))
 import subprocess as sp
 
@@ -13,6 +14,7 @@ from cli_tasks import common
 from invoke import task
 
 PROJECT_DIR = os.path.dirname(__file__)
+TEST_AUTH_KEYS_DIR = os.path.join(PROJECT_DIR, 'test_data', 'auth_keys')
 NEW_DATA_DIR = os.path.join(PROJECT_DIR, 'new_data')
 
 
@@ -33,14 +35,41 @@ def generate_totp_secret(_c):
 
 
 @task
-def generate_auth_keys(c):
-    os.makedirs(NEW_DATA_DIR, exist_ok=True)
-    key_file_path = os.path.join(NEW_DATA_DIR, 'auth_key.pem')
-    c.run(f'ssh-keygen -t rsa -b 4096 -m PEM -f {key_file_path}')
+def generate_auth_keys(c, t=False):
+    data_dir = NEW_DATA_DIR
+    if t:
+        data_dir = TEST_AUTH_KEYS_DIR
 
-    origin_pub_key_file = f'{key_file_path}.pub'
-    correct_pub_key_file = origin_pub_key_file.replace('.pem.pub', '.pub.pem')
-    shutil.move(origin_pub_key_file, correct_pub_key_file)
+    pr_key_file = os.path.join(data_dir, 'auth_key.pem')
+    pub_key_file = os.path.join(data_dir, 'auth_key.pub.pem')
+
+    for file_path in pr_key_file, pub_key_file:
+        if os.path.exists(file_path):
+            os.unlink(file_path)
+
+    os.makedirs(data_dir, exist_ok=True)
+    c.run(f'openssl ecparam -name secp521r1 -genkey -out {pr_key_file}')
+    c.run(f'openssl ec -in {pr_key_file} -pubout -out {pub_key_file}')
+
+    if t:
+        test_auth_keys(c)
+
+
+@task
+def test_auth_keys(c):
+    from authlib.jose.rfc7517.asymmetric_key import load_pem_key
+
+    with open(os.path.join(TEST_AUTH_KEYS_DIR, 'auth_key.pem'), 'rb') as fp:
+        private_res = load_pem_key(fp.read(), key_type='private')
+    print('Private key:')
+    print(' curve name:', private_res.curve.name)
+    print(' curve key size:', private_res.curve.key_size)
+
+    with open(os.path.join(TEST_AUTH_KEYS_DIR, 'auth_key.pub.pem'), 'rb') as fp:
+        pub_res = load_pem_key(fp.read(), key_type='public')
+    print('Public key:')
+    print(' curve name:', pub_res.curve.name)
+    print(' curve key size:', pub_res.curve.key_size)
 
 
 @task

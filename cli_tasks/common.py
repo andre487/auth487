@@ -27,8 +27,8 @@ DEFAULT_APP_ENV = {
     'FLASK_ENV': 'dev',
     'FLASK_DEBUG': '1',
     'AUTH_DOMAIN': 'https://auth.andre.life',
-    'AUTH_PRIVATE_KEY_FILE': os.path.join(TEST_DATA_DIR, 'auth_keys', 'key'),
-    'AUTH_PUBLIC_KEY_FILE': os.path.join(TEST_DATA_DIR, 'auth_keys', 'key.pub.pem'),
+    'AUTH_PRIVATE_KEY_FILE': os.path.join(TEST_DATA_DIR, 'auth_keys', 'auth_key.pem'),
+    'AUTH_PUBLIC_KEY_FILE': os.path.join(TEST_DATA_DIR, 'auth_keys', 'auth_key.pub.pem'),
     'AUTH_INFO_FILE': os.path.join(TEST_DATA_DIR, 'test-auth-info.json'),
 }
 
@@ -77,8 +77,8 @@ def start_docker_instance(port, db_name=DEV_DB_NAME, force_db_cleaning=False):
         '--link', DOCKER_MONGO_NAME,
         '-p', f'127.0.0.1:{port}:5000',
         '-v', f'{TEST_DATA_DIR}:/opt/test_data',
-        '-e', 'AUTH_PRIVATE_KEY_FILE=/opt/test_data/auth_keys/key',
-        '-e', 'AUTH_PUBLIC_KEY_FILE=/opt/test_data/auth_keys/key.pub.pem',
+        '-e', 'AUTH_PRIVATE_KEY_FILE=/opt/test_data/auth_keys/auth_key.pem',
+        '-e', 'AUTH_PUBLIC_KEY_FILE=/opt/test_data/auth_keys/auth_key.pub.pem',
         '-e', f'AUTH_DOMAIN=http://127.0.0.1:{port}',
         '-e', 'AUTH_DEV_MODE=1',
         '-e', 'AUTH_INFO_FILE=/opt/test_data/test-auth-info.json',
