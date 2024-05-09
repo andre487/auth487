@@ -4,7 +4,7 @@ ADD ./requirements.txt /usr/local/bin/app/requirements.txt
 
 RUN set -x && \
     apt-get update && \
-    apt-get install -y python3 python3-pip build-essential libssl-dev libffi-dev python3-dev && \
+    apt-get install -y python3 python3-pip build-essential libssl-dev libev-dev libffi-dev python3-dev && \
     python3 -m pip install --upgrade --no-cache-dir pip && \
     python3 -m pip install --no-cache-dir -r /usr/local/bin/app/requirements.txt && \
     apt-get purge -y python3-pip build-essential && \

@@ -1,11 +1,12 @@
 import json
-import logging
+import logging.config
 import os
-import pytz
+import sys
 from datetime import datetime, timedelta
 
 import flask
 import pyotp
+import pytz
 
 import app_common
 import mail
@@ -20,9 +21,6 @@ PRIVATE_KEY_FILE = os.environ.get('AUTH_PRIVATE_KEY_FILE')
 if not PRIVATE_KEY_FILE:
     raise EnvironmentError('You should pass private key file via AUTH_PRIVATE_KEY_FILE environment variable')
 
-LOG_FORMAT = '%(asctime)s %(levelname)s\t%(message)s\t%(pathname)s:%(lineno)d %(funcName)s %(process)d %(threadName)s'
-LOG_LEVEL = os.environ.get('LOG_LEVEL', logging.INFO)
-
 ADDITIONAL_HEADERS = {
     'Content-Security-Policy': (
         "default-src 'none'; "
@@ -33,7 +31,26 @@ ADDITIONAL_HEADERS = {
     'X-Frame-Options': 'deny'
 }
 
-logging.basicConfig(format=LOG_FORMAT, level=LOG_LEVEL)
+LOG_FORMAT = '%(asctime)s %(levelname)s\t%(name)s\t%(message)s\t'
+LOG_LEVEL = os.environ.get('LOG_LEVEL', logging.INFO)
+
+logging.config.dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': LOG_FORMAT,
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': sys.stderr,
+        'formatter': 'default',
+    }},
+    'root': {
+        'level': LOG_LEVEL,
+        'handlers': ['wsgi'],
+    }
+})
+
+logging.basicConfig(level=LOG_LEVEL)
 
 app = flask.Flask(__name__)
 templating.setup_filters(app)

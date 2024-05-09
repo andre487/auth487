@@ -5,8 +5,6 @@ import sys
 sys.path.append(os.path.realpath(os.path.pardir))
 import subprocess as sp
 
-import pyotp
-
 import app_common
 import cli_tasks
 from cli_tasks import common
@@ -30,6 +28,7 @@ def hash_password(_c, password):
 
 @task
 def generate_totp_secret(_c):
+    import pyotp
     print(pyotp.random_base32(length=64), end='')
 
 
@@ -143,9 +142,9 @@ def prepare_secrets(c, recreate_venv=False):
 
 
 @task
-def create_local_venv(c, rebuild_venv=False):
+def create_local_venv(c):
     """Prepare .venv dir for using in IDE"""
-    common.prepare_virtual_env(c, rebuild_venv)
+    common.prepare_virtual_env(c, recreate_venv=True)
 
 
 @task

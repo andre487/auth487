@@ -19,12 +19,4 @@ fi
 
 ./yc_secret_fetcher.py once --secrets-dir "$SECRETS_DIR" "${run_arg[@]}"
 
-uwsgi --http '0.0.0.0:5000' \
-    --workers "$worker_count" \
-    --master \
-    --disable-logging \
-    --no-orphans \
-    --wsgi-file app.py \
-    --callable app \
-    --die-on-term \
-    --static-map /static="$proj_dir/static"
+./run_prod.py --address '0.0.0.0' --port 5000
