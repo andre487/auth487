@@ -1,11 +1,13 @@
 import base64
 import logging
 import os
-import user_agents
+from email.mime.text import MIMEText
 from urllib import parse as url_parse
+
+import user_agents
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
-from email.mime.text import MIMEText
+
 from lib.auth487.common import AUTH_DEV_MODE
 from lib.auth487.flask import get_remote_addr
 

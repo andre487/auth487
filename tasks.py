@@ -1,6 +1,5 @@
 # flake8: noqa F402
 import os
-import shutil
 import sys
 
 sys.path.append(os.path.realpath(os.path.pardir))
