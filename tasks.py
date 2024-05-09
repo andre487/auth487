@@ -55,7 +55,7 @@ def generate_auth_keys(c, t=False):
 
 
 @task
-def test_auth_keys(c):
+def test_auth_keys(_c):
     from authlib.jose.rfc7517.asymmetric_key import load_pem_key
 
     with open(os.path.join(TEST_AUTH_KEYS_DIR, 'auth_key.pem'), 'rb') as fp:
@@ -86,7 +86,7 @@ def create_test_otp(c, user='test'):
 @task
 def create_prod_otp(c, user='test'):
     """Create one-time password for test users"""
-    cli_tasks.prepare_secrets.run(c, recreate_venv=False, no_secret_cache=False, silent=True)
+    cli_tasks.prepare_secrets.run(c, recreate_venv=False)
     cli_tasks.create_prod_otp.run(c, user)
 
 
@@ -133,9 +133,9 @@ def docker_test(c, recreate_venv=False):
 
 
 @task
-def prepare_secrets(c, recreate_venv=False, no_secret_cache=False):
+def prepare_secrets(c, recreate_venv=False):
     """Prepare secrets for production"""
-    cli_tasks.prepare_secrets.run(c, recreate_venv, no_secret_cache)
+    cli_tasks.prepare_secrets.run(c, recreate_venv)
 
 
 @task
@@ -145,11 +145,11 @@ def create_local_venv(c, rebuild_venv=False):
 
 
 @task
-def make_deploy(c, recreate_venv=False, no_secret_cache=False):
+def make_deploy(c, recreate_venv=False):
     """Deploy current work dir to production"""
     cli_tasks.run_linters.run(c, recreate_venv)
 
-    cli_tasks.prepare_secrets.run(c, recreate_venv, no_secret_cache)
+    cli_tasks.prepare_secrets.run(c, recreate_venv)
 
     cli_tasks.docker_build.run(c)
     cli_tasks.docker_test.run(c, recreate_venv)
