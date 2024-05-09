@@ -6,7 +6,6 @@
   vars:
     container_name: auth487
     network_name: auth487_net
-    secret_dir: '{{ playbook_dir }}/../.secret'
 
   tasks:
     - name: Check SSL certificates
@@ -69,49 +68,6 @@
         state: reloaded
       when: config_res.changed or certificate_res.changed
 
-    - name: Create app configs dir
-      file:
-        state: directory
-        dest: /etc/auth487
-
-    - name: Create app MongoDB auth dir
-      file:
-        state: directory
-        dest: /etc/auth487/mongo
-
-    - name: Setup auth info file
-      copy:
-        src: '{{ secret_dir }}/auth_info/auth_info.json'
-        dest: /etc/auth487/auth-info.json
-
-    - name: Setup private key
-      copy:
-        src: '{{ secret_dir }}/auth_info/auth_key.pem'
-        dest: /etc/auth487/auth_key.pem
-
-    - name: Setup public key
-      copy:
-        src: '{{ secret_dir }}/auth_info/auth_key.pub.pem'
-        dest: /etc/auth487/auth_key.pub.pem
-
-    - name: Setup Gmail credentials file
-      copy:
-        src: '{{ secret_dir }}/gmail_sender/credentials.json'
-        dest: /etc/auth487/gmail_credentials.json
-
-    - name: Setup MongoDB auth files
-      copy:
-        src: '{{ secret_dir }}/mongo/{{ item }}'
-        dest: /etc/auth487/mongo/{{ item }}
-      with_items:
-        - host
-        - port
-        - replica_set
-        - auth_source
-        - ssl_cert
-        - user
-        - password
-
     - name: Create docker network for service
       community.general.docker_network:
         name: '{{ network_name }}'
@@ -145,9 +101,6 @@
         networks_cli_compatible: no
         networks:
           - name: '{{ network_name }}'
-        volumes:
-          - /etc/auth487:/etc/auth487:ro
-          - /usr/local/share/ca-certificates:/usr/local/share/ca-certificates:ro
         ports:
           - '127.0.0.1:{{ service_port }}:5000'
         env:
@@ -160,6 +113,7 @@
           MONGO_PASSWORD: /opt/secrets/mongo/password
           MONGO_AUTH_SOURCE: /opt/secrets/mongo/auth_source
           MONGO_DB_NAME: auth487
+          AUTH_BASE_URL: 'https://{{ http_domain }}'
           AUTH_DOMAIN: '{{ auth_domain }}'
           AUTH_PRIVATE_KEY_FILE: /opt/secrets/auth_info/auth_key.pem
           AUTH_PUBLIC_KEY_FILE: /opt/secrets/auth_info/auth_key.pub.pem
