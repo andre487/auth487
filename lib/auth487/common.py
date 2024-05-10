@@ -52,6 +52,12 @@ class AuthInfoData(typing.NamedTuple):
     decline_reason: AuthTokenDeclineReason = AuthTokenDeclineReason.NONE
 
 
+def extract_auth_info_from_token(get_auth_token):
+    if not (auth_token := get_auth_token()):
+        return None
+    return _extract_auth_info(auth_token)
+
+
 def check_auth_info_from_token(get_auth_token, access=()):
     auth_token = get_auth_token()
     if not auth_token:

@@ -86,7 +86,7 @@ def get_remote_addr(request):
 
 def require_auth(auth_path=acm.AUTH_BASE_URL, return_route=None, no_redirect=False, access=()):
     if not auth_path:
-        raise Exception('You should provide auth path via AUTH_DOMAIN var or via argument')
+        raise Exception('You should provide auth path via AUTH_BASE_URL var or via argument')
 
     def require_auth_decorator(route_func):
         ret_route = return_route
@@ -152,3 +152,4 @@ def require_auth(auth_path=acm.AUTH_BASE_URL, return_route=None, no_redirect=Fal
 
 is_authenticated = partial(acm.is_authenticated, get_auth_token)
 check_auth_info_from_token = partial(acm.check_auth_info_from_token, get_auth_token)
+extract_auth_info_from_token = partial(acm.extract_auth_info_from_token, get_auth_token)
