@@ -152,3 +152,4 @@ def require_auth(auth_path=acm.AUTH_BASE_URL, return_route=None, no_redirect=Fal
 
 is_authenticated = partial(acm.is_authenticated, get_auth_token)
 check_auth_info_from_token = partial(acm.check_auth_info_from_token, get_auth_token)
+extract_auth_info_from_token = partial(acm.extract_auth_info_from_token, get_auth_token)
