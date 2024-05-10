@@ -117,7 +117,7 @@
           AUTH_DOMAIN: '{{ auth_domain }}'
           AUTH_PRIVATE_KEY_FILE: /opt/secrets/auth_info/auth_key.pem
           AUTH_PUBLIC_KEY_FILE: /opt/secrets/auth_info/auth_key.pub.pem
-          AUTH_INFO_FILE: /opt/secrets/auth_info/auth-info.json
+          AUTH_INFO_FILE: /opt/secrets/auth_info/auth_info.json
           NOTIFICATION_EMAIL_FROM: '{{ notification_from }}'
           NOTIFICATION_EMAIL_TO: '{{ notification_to }}'
           GMAIL_CREDENTIALS_FILE: /opt/secrets/gmail_sender/gmail_credentials.json
