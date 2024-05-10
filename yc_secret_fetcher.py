@@ -5,6 +5,7 @@ import logging
 import os
 import subprocess as sp
 import time
+import typing as tp
 import urllib.request
 
 import click
@@ -34,7 +35,8 @@ def main() -> None:
 @op_secrets_dir
 @op_meta_service
 @op_dev_run
-def once(secrets_dir: str, meta_service: str, dev_run: bool) -> None:
+@click.argument('free_args', nargs=-1, type=click.UNPROCESSED)
+def once(secrets_dir: str, meta_service: str, dev_run: bool, **_kwargs: tp.Any) -> None:
     get_secrets(secrets_dir, meta_service, dev_run)
 
 
@@ -43,7 +45,8 @@ def once(secrets_dir: str, meta_service: str, dev_run: bool) -> None:
 @op_meta_service
 @click.option('--sync-interval', '-s', default=90.0)
 @op_dev_run
-def loop(secrets_dir: str, meta_service: str, sync_interval: float, dev_run: bool) -> None:
+@click.argument('free_args', nargs=-1, type=click.UNPROCESSED)
+def loop(secrets_dir: str, meta_service: str, sync_interval: float, dev_run: bool, **_kwargs: tp.Any) -> None:
     while True:
         logger.info('Waiting %f seconds...', sync_interval)
         time.sleep(sync_interval)
