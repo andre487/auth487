@@ -185,7 +185,6 @@ def logout():
 
 
 @app.route('/get-public-key')
-@ath.protected_from_brute_force
 def get_public_key():
     return flask.Response(acm.get_public_key(), headers={'Content-Type': 'text/plain; charset=utf-8'})
 
