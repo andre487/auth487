@@ -156,7 +156,7 @@ def submit_totp():
     auth_token = acm.create_auth_token(login, auth_data, get_private_key())
     exp_days = auth_data.get('expiration_days', 1)
     expires = datetime.now(tz=pytz.utc) + timedelta(days=exp_days)
-    domain = None if app.debug else acm.AUTH_DOMAIN
+    domain = None if app.debug else AUTH_DOMAIN
 
     resp.set_cookie(
         acm.AUTH_COOKIE_NAME, auth_token, expires=expires,
@@ -173,7 +173,7 @@ def logout():
 
     auth_token = ''
     expires = datetime.now() - timedelta(days=30)
-    domain = None if app.debug else acm.AUTH_DOMAIN
+    domain = None if app.debug else AUTH_DOMAIN
 
     resp = flask.redirect(return_path, code=302)
     resp.set_cookie(
