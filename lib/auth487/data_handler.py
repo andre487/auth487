@@ -9,7 +9,7 @@ import pyotp
 from .common import AUTH_DEV_MODE
 
 CONNECT_TIMEOUT = 500
-AUTH_MISTAKES_TO_BAN = int(os.getenv('AUTH_MISTAKES_TO_BAN', '10'))
+AUTH_MISTAKES_TO_BAN = int(os.getenv('AUTH_MISTAKES_TO_BAN', '5'))
 AUTH_BAN_TIME = int(os.getenv('AUTH_BAN_TIME', '60'))
 
 _mongo_client = None
