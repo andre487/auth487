@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
-set -e -o pipefail
+set -eufxo pipefail
+cd "$(dirname "$0")"
 
-proj_dir="$(cd "$(dirname "$0")" && pwd)"
-cd "$proj_dir"
+export PYTHONDONTWRITEBYTECODE=1
 
-cpu_count="$(getconf _NPROCESSORS_ONLN)"
-worker_count="$(($cpu_count * 2))"
+if [[ -z "${SECRETS_DIR:-}" ]]; then
+    echo "No secret dir"
+    exit 1
+fi
 
-uwsgi --http '0.0.0.0:5000' \
-    --workers "$worker_count" \
-    --master \
-    --disable-logging \
-    --no-orphans \
-    --wsgi-file app.py \
-    --callable app \
-    --static-map /static="$proj_dir/static"
+YC_SECRET_RUN_ARG=''
+if [[ "${SECRETS_DEV_RUN:-}" == 1 ]]; then
+    YC_SECRET_RUN_ARG=--dev-run
+fi
+export YC_SECRET_RUN_ARG
+
+./yc_secret_fetcher.py once --secrets-dir "$SECRETS_DIR" "${YC_SECRET_RUN_ARG[@]}"
+
+supervisord --configuration conf/supervisord.conf

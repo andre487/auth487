@@ -7,7 +7,7 @@ import socket
 import subprocess
 from functools import partial
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s\t%(name)s\t%(message)s')
 
 PROJECT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 VENV_DIR = os.path.join(PROJECT_DIR, '.venv')
@@ -27,8 +27,8 @@ DEFAULT_APP_ENV = {
     'FLASK_ENV': 'dev',
     'FLASK_DEBUG': '1',
     'AUTH_DOMAIN': 'https://auth.andre.life',
-    'AUTH_PRIVATE_KEY_FILE': os.path.join(TEST_DATA_DIR, 'auth_keys', 'key'),
-    'AUTH_PUBLIC_KEY_FILE': os.path.join(TEST_DATA_DIR, 'auth_keys', 'key.pub.pem'),
+    'AUTH_PRIVATE_KEY_FILE': os.path.join(TEST_DATA_DIR, 'auth_keys', 'auth_key.pem'),
+    'AUTH_PUBLIC_KEY_FILE': os.path.join(TEST_DATA_DIR, 'auth_keys', 'auth_key.pub.pem'),
     'AUTH_INFO_FILE': os.path.join(TEST_DATA_DIR, 'test-auth-info.json'),
 }
 
@@ -42,7 +42,7 @@ def prepare_virtual_env(c, recreate_venv):
         else:
             return
 
-    c.run(f'python3 -m venv --copies --upgrade-deps --clear {VENV_DIR}')
+    c.run(f'python3.10 -m venv --copies --upgrade-deps --clear {VENV_DIR}')
     c.run(f'{PYTHON} -m pip install -r {PROJECT_DIR}/requirements.txt')
 
 
@@ -63,7 +63,12 @@ def start_dev_instance(port, db_name=DEV_DB_NAME, force_db_cleaning=False):
     )
 
 
-def start_docker_instance(port, db_name=DEV_DB_NAME, force_db_cleaning=False):
+def start_docker_instance(
+    port,
+    db_name=DEV_DB_NAME,
+    force_db_cleaning=False,
+    as_daemon=False,
+):
     logging.info('Starting Docker app instance')
     run_mongo(force_db_cleaning=force_db_cleaning, db_name=db_name)
 
@@ -72,13 +77,25 @@ def start_docker_instance(port, db_name=DEV_DB_NAME, force_db_cleaning=False):
     if cont_id:
         subprocess.check_call((docker, 'rm', '-f', cont_id))
 
+    iam_token = subprocess.check_output(('yc', 'iam', 'create-token'), encoding='utf8').strip()
+
+    daemon_arg = []
+    if as_daemon:
+        daemon_arg = ['-d']
+
+    email_vars = []
+    if val := os.getenv('NOTIFICATION_EMAIL_FROM'):
+        email_vars.extend(('-e', f'NOTIFICATION_EMAIL_FROM={val}'))
+    if val := os.getenv('NOTIFICATION_EMAIL_TO'):
+        email_vars.extend(('-e', f'NOTIFICATION_EMAIL_TO={val}'))
+
     cont_id = subprocess.check_output((
-        docker, 'run', '-d', '--name', DOCKER_APP_NAME,
+        docker, 'run', *daemon_arg, '--rm', '--name', DOCKER_APP_NAME,
         '--link', DOCKER_MONGO_NAME,
         '-p', f'127.0.0.1:{port}:5000',
         '-v', f'{TEST_DATA_DIR}:/opt/test_data',
-        '-e', 'AUTH_PRIVATE_KEY_FILE=/opt/test_data/auth_keys/key',
-        '-e', 'AUTH_PUBLIC_KEY_FILE=/opt/test_data/auth_keys/key.pub.pem',
+        '-e', 'AUTH_PRIVATE_KEY_FILE=/opt/test_data/auth_keys/auth_key.pem',
+        '-e', 'AUTH_PUBLIC_KEY_FILE=/opt/test_data/auth_keys/auth_key.pub.pem',
         '-e', f'AUTH_DOMAIN=http://127.0.0.1:{port}',
         '-e', 'AUTH_DEV_MODE=1',
         '-e', 'AUTH_INFO_FILE=/opt/test_data/test-auth-info.json',
@@ -87,6 +104,11 @@ def start_docker_instance(port, db_name=DEV_DB_NAME, force_db_cleaning=False):
         '-e', 'FLASK_DEBUG=1',
         '-e', f'MONGO_HOST={DOCKER_MONGO_NAME}',
         '-e', f'MONGO_DB_NAME={db_name}',
+        '-e', 'SECRETS_DIR=/opt/secrets',
+        '-e', 'GMAIL_CREDENTIALS_FILE=/opt/secrets/gmail_sender/credentials.json',
+        '-e', 'SECRETS_DEV_RUN=1',
+        '-e', f'IAM_TOKEN={iam_token}',
+        *email_vars,
         DOCKER_IMAGE_NAME,
     )).strip()
 
@@ -208,12 +230,6 @@ def drop_db(db_name):
         'MONGO_PORT': mongo_port,
         'MONGO_DB_NAME': db_name,
     })
-
-
-def get_auth_token():
-    token_file = os.path.join(TEST_DATA_DIR, 'test-auth-token.txt')
-    with open(token_file) as fp:
-        return fp.read().strip()
 
 
 def get_csrf_token():

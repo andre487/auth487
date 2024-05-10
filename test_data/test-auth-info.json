@@ -1,12 +1,14 @@
 {
-    "test": {
-        "password": "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff",
-        "totp_secret": "HAYDOYZUMZSDONZWHEZDMYJSMQZWIZLEMNRTCMBRG4YGEZLFMMZQ====",
-        "access": {"sms": true, "banned_ips": true}
-    },
-    "test2": {
-        "password": "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff",
-        "totp_secret": "GMZTMZBVHFTGKZLGHA2DKZRRMQ3TMOLFGEZTSNDFGEZGIMDDGRQQ====",
-        "access": {"sms": true, "banned_ips": false}
-    }
+  "test": {
+    "password": "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff",
+    "totp_secret": "HAYDOYZUMZSDONZWHEZDMYJSMQZWIZLEMNRTCMBRG4YGEZLFMMZQ====",
+    "access": {"sms": true, "banned_ips": true},
+    "expiration_days": 1
+  },
+  "test2": {
+    "password": "ee26b0dd4af7e749aa1a8ee3c10ae9923f618980772e473f8819a5d4940e0db27ac185f8a0e1d5f84f88bc887fd67b143732c304cc5fa9ad8e6f57f50028a8ff",
+    "totp_secret": "GMZTMZBVHFTGKZLGHA2DKZRRMQ3TMOLFGEZTSNDFGEZGIMDDGRQQ====",
+    "access": {"sms": true, "banned_ips": false},
+    "expiration_days": 2
+  }
 }

@@ -2,8 +2,9 @@ import logging
 import secrets
 import urllib.parse
 from functools import partial, wraps
-from . import common as acm
-from . import data_handler
+
+from . import common as acm, data_handler
+from .common import AuthTokenDeclineReason
 
 try:
     import flask
@@ -83,53 +84,64 @@ def get_remote_addr(request):
     return remote_addr
 
 
-def require_auth(auth_path=acm.AUTH_DOMAIN, return_route=None, no_redirect=False, access=()):
-    assert auth_path, 'You should provide auth path via AUTH_DOMAIN var or via argument'
+def require_auth(auth_path=acm.AUTH_BASE_URL, return_route=None, no_redirect=False, access=()):
+    if not auth_path:
+        raise Exception('You should provide auth path via AUTH_DOMAIN var or via argument')
 
     def require_auth_decorator(route_func):
-        nonlocal return_route
-        if return_route is None:
-            return_route = route_func.__name__
+        ret_route = return_route
+        if ret_route is None:
+            ret_route = route_func.__name__
 
         @wraps(route_func)
         def wrapped_route(*args, **kwargs):
-            # noinspection PyArgumentList
-            if not is_authenticated():
-                if no_redirect:
+            url_root = flask.request.url_root.removesuffix('/')
+
+            auth_path_parsed = urllib.parse.urlparse(auth_path)
+            auth_path_qp = urllib.parse.parse_qs(auth_path_parsed.query)
+            auth_path_qp['return-path'] = [urllib.parse.quote(url_root + flask.url_for(ret_route))]
+
+            auth_url = urllib.parse.urlunparse((
+                auth_path_parsed.scheme,
+                auth_path_parsed.netloc,
+                auth_path_parsed.path,
+                auth_path_parsed.params,
+                urllib.parse.urlencode(auth_path_qp, doseq=True),
+                auth_path_parsed.fragment,
+            ))
+
+            auth_data = check_auth_info_from_token(access)
+
+            match auth_data.decline_reason:
+                case AuthTokenDeclineReason.NONE:
+                    # OK
+                    pass
+                case AuthTokenDeclineReason.IAT_INVALID:
+                    if no_redirect:
+                        return flask.Response(
+                            '{"error": "Token time is invalid"}', status=401,
+                            headers={'Content-Type': 'application/json'},
+                        )
+                    return flask.redirect(auth_url, code=302)
+                case AuthTokenDeclineReason.NBF_INVALID:
+                    if no_redirect:
+                        return flask.Response(
+                            '{"error": "Token is too new"}', status=401,
+                            headers={'Content-Type': 'application/json'},
+                        )
+                    return flask.redirect(auth_url, code=302)
+                case AuthTokenDeclineReason.NO_ACCESS:
                     return flask.Response(
-                        '{"error": "Auth error"}', status=403,
+                        '{"error": "You are not authorized for this service"}', status=401,
                         headers={'Content-Type': 'application/json'},
                     )
-
-                url_root = flask.request.url_root
-                if url_root.endswith('/'):
-                    url_root = url_root[:-1]
-
-                return_url = urllib.parse.quote(
-                    url_root +
-                    flask.url_for(return_route)
-                )
-
-                auth_url = (
-                        auth_path +
-                        ('&' if '?' in auth_path else '?') +
-                        'return-path=' +
-                        return_url
-                )
-                return flask.redirect(auth_url, code=302)
-
-            auth_info = acm.extract_auth_info(get_auth_token())
-            has_access = True
-            for rule in access:
-                has_access = has_access and data_handler.has_access_to(auth_info, rule)
-                if not has_access:
-                    break
-
-            if not has_access:
-                return flask.Response(
-                    '{"error": "You are not authorized for this service"}', status=401,
-                    headers={'Content-Type': 'application/json'},
-                )
+                case other:
+                    if no_redirect:
+                        return flask.Response(
+                            '{"error": "Auth error %s"}' % str(other), status=403,
+                            headers={'Content-Type': 'application/json'},
+                        )
+                    return flask.redirect(auth_url, code=302)
 
             return route_func(*args, **kwargs)
 
@@ -139,3 +151,4 @@ def require_auth(auth_path=acm.AUTH_DOMAIN, return_route=None, no_redirect=False
 
 
 is_authenticated = partial(acm.is_authenticated, get_auth_token)
+check_auth_info_from_token = partial(acm.check_auth_info_from_token, get_auth_token)
