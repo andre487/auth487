@@ -74,6 +74,7 @@ def get_secrets(secrets_dir: str, meta_service: str, dev_run: bool) -> None:
             ex_val = ...
             ex_file = False
             if os.path.exists(sec_file):
+                ex_file = True
                 with open(sec_file, 'rb') as fp:
                     ex_val = fp.read()
 
