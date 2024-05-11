@@ -5,6 +5,9 @@
     <section class="user-panel">
         <h2 class="section-header">Auth token</h2>
         <code class="user-panel__auth-token code code_wrap">{{ auth_token }}</code>
+        <div class="user-panel__authorize" id="authorize-container">
+            <button id="authorize-button" class="button action-button button_send_token">Authorize</button>
+        </div>
 
         <h2 class="section-header section-header_indent">Auth info</h2>
         <code class="user-panel__auth-token code code_wrap">{{ auth_info }}</code>
@@ -22,4 +25,27 @@
             No access to banned IPs
         {% endif %}
     </section>
+
+    <script nonce="{{ csp_nonce }}">
+        (function() {
+            var App487Bridge = window.App487Bridge;
+            if (!App487Bridge) {
+                return;
+            }
+
+            var data = {
+                type: 'newToken',
+                data: '{{ auth_token }}',
+            };
+
+            var authorizeContainer = document.getElementById('authorize-container');
+            var authorizeButton = document.getElementById('authorize-button');
+
+            authorizeContainer.classList.add('user-panel__authorize_active');
+
+            authorizeButton.addEventListener('click', function() {
+                App487Bridge.sendData(JSON.stringify(data));
+            });
+        })();
+    </script>
 {% endblock %}
