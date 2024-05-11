@@ -91,6 +91,15 @@
     padding: 0 20px;
 }
 
+.user-panel__authorize {
+    margin: 10px 0;
+    display: none;
+}
+
+.user-panel__authorize_active {
+    display: block;
+}
+
 .auth-form-wrapper {
     display: flex;
     justify-content: center;

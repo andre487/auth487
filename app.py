@@ -1,6 +1,7 @@
 import json
 import logging.config
 import os
+import secrets
 import sys
 import urllib.parse
 from datetime import datetime, timedelta
@@ -25,14 +26,15 @@ if not PRIVATE_KEY_FILE:
     raise EnvironmentError('You should pass private key file via AUTH_PRIVATE_KEY_FILE environment variable')
 
 ADDITIONAL_HEADERS = {
-    'Content-Security-Policy': (
-        "default-src 'none'; "
-        "style-src 'self'; "
-        "script-src 'self'; "
-        "img-src 'self';"
-    ),
-    'X-Frame-Options': 'deny'
+    'X-Frame-Options': 'deny',
 }
+
+CSP_HEADER_TPL = (
+    "default-src 'none'; "
+    "style-src 'nonce-{nonce}'; "
+    "script-src 'nonce-{nonce}'; "
+    "img-src 'self';"
+)
 
 LOG_FORMAT = '%(asctime)s %(levelname)s\t%(name)s\t%(message)s\t'
 LOG_LEVEL = os.environ.get('LOG_LEVEL', logging.INFO)
@@ -234,9 +236,13 @@ def make_response(base_resp=None, http_headers=None, **_):
     for name, val in http_headers.items():
         base_resp.headers[name] = val
 
+    nonce = secrets.token_hex(8)
+    base_resp.headers['Content-Security-Policy'] = CSP_HEADER_TPL.format(nonce=nonce)
+
     app.jinja_env.globals.update(
         csrf_field_name=acm.CSRF_FIELD_NAME,
         csrf_token=ath.set_csrf_token(app, resp=base_resp),
+        csp_nonce=nonce,
     )
 
     return base_resp
