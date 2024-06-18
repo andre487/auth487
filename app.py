@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import flask
 import pyotp
 import pytz
+import werkzeug.exceptions
 
 import app_common
 import mail
@@ -41,14 +42,18 @@ LOG_LEVEL = os.environ.get('LOG_LEVEL', logging.INFO)
 
 logging.config.dictConfig({
     'version': 1,
-    'formatters': {'default': {
-        'format': LOG_FORMAT,
-    }},
-    'handlers': {'wsgi': {
-        'class': 'logging.StreamHandler',
-        'stream': sys.stderr,
-        'formatter': 'default',
-    }},
+    'formatters': {
+        'default': {
+            'format': LOG_FORMAT,
+        }
+    },
+    'handlers': {
+        'wsgi': {
+            'class': 'logging.StreamHandler',
+            'stream': sys.stderr,
+            'formatter': 'default',
+        }
+    },
     'root': {
         'level': LOG_LEVEL,
         'handlers': ['wsgi'],
@@ -72,10 +77,7 @@ def index():
     return_path = flask.request.args.get('return-path', flask.url_for('index'))
     return_path_parts = urllib.parse.urlparse(return_path)
     if return_path_parts.netloc and not return_path_parts.netloc.endswith(AUTH_DOMAIN):
-        return flask.Response(
-            '{"error": "Return path is invalid"}', status=400,
-            headers={'Content-Type': 'application/json'},
-        )
+        raise werkzeug.exceptions.BadRequest('Return path is invalid')
 
     if ath.is_authenticated():
         auth_token = ath.get_auth_token()
@@ -101,13 +103,17 @@ def login():
     return_path = flask.request.form.get('return-path', flask.url_for('index'))
 
     if not login or not password:
-        return flask.Response('No auth info', status=400)
+        raise werkzeug.exceptions.BadRequest('No auth info')
 
     auth_data = get_auth_info_data().get(login)
     if not auth_data:
-        return flask.Response('User is not found', status=403)
+        raise werkzeug.exceptions.Forbidden('User is not found')
 
     actual_password_hash = app_common.hash_password(password)
+    expected_password_hash = auth_data.get("password")
+    if actual_password_hash != expected_password_hash:
+        raise werkzeug.exceptions.Forbidden('Wrong password')
+
     auth_id = data_handler.create_second_factor_record(login, auth_data, actual_password_hash)
 
     headers = {}
@@ -130,27 +136,27 @@ def submit_totp():
     return_path = flask.request.form.get('return-path', flask.url_for('index'))
 
     if not login or not password or not auth_id:
-        return flask.Response('No auth info', status=400)
+        raise werkzeug.exceptions.BadRequest('No auth info')
 
     auth_data = get_auth_info_data().get(login)
     if not auth_data:
-        return flask.Response('User is not found', status=403)
+        raise werkzeug.exceptions.Forbidden('User is not found')
 
     sf_record = data_handler.get_second_factor_record(login, auth_id)
     if not sf_record:
-        return flask.Response('No auth info', status=400)
+        raise werkzeug.exceptions.BadRequest('No auth info')
 
     data_handler.remove_second_factor_record(login, auth_id)
 
     expected_password_hash = auth_data.get("password")
     if not expected_password_hash:
-        return flask.Response('Wrong login or password', status=403)
+        raise werkzeug.exceptions.Forbidden('Wrong login or password')
 
     if not pyotp.TOTP(auth_data['totp_secret']).verify(password):
-        return flask.Response('Wrong OTP', status=403)
+        raise werkzeug.exceptions.Forbidden('Wrong OTP')
 
     if sf_record['password_hash'] != expected_password_hash:
-        return flask.Response('Wrong login or password', status=403)
+        raise werkzeug.exceptions.Forbidden('Wrong password')
 
     resp = flask.redirect(return_path, code=302)
     mail.send_new_login_notification(flask.request, resp)
@@ -199,6 +205,33 @@ def robots_txt():
             'Disallow: /'
         ),
         headers={'Content-Type': 'text/plain; charset=utf-8'}
+    )
+
+
+@app.errorhandler(werkzeug.exceptions.HTTPException)
+def error_page(e: werkzeug.exceptions.HTTPException):
+    err_msg = f'{e.code} {type(e).__name__}'
+    return make_template_response(
+        'error.html',
+        page_title=err_msg,
+        error_type=err_msg,
+        error_description=e.description,
+        hide_logout=True,
+        code=e.code,
+    )
+
+
+@app.errorhandler(Exception)
+def error_page(e: Exception):
+    err_code = 500
+    err_msg = f'{err_code} Internal Server Error'
+    return make_template_response(
+        'error.html',
+        page_title=err_msg,
+        error_type=err_msg,
+        error_description=str(e),
+        hide_logout=True,
+        code=err_code,
     )
 
 
