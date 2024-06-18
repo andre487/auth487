@@ -99,7 +99,7 @@ def require_auth(auth_path=acm.AUTH_BASE_URL, return_route=None, no_redirect=Fal
 
             auth_path_parsed = urllib.parse.urlparse(auth_path)
             auth_path_qp = urllib.parse.parse_qs(auth_path_parsed.query)
-            auth_path_qp['return-path'] = [urllib.parse.quote(url_root + flask.url_for(ret_route))]
+            auth_path_qp['return-path'] = [url_root + flask.url_for(ret_route)]
 
             auth_url = urllib.parse.urlunparse((
                 auth_path_parsed.scheme,
