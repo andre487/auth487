@@ -1,0 +1,30 @@
+version: '3'
+services:
+  app:
+    restart: always
+    # noinspection ComposeUnknownValues
+    image: '{{ app_docker_image }}'
+    # noinspection ComposeUnknownValues
+    ports:
+      - '127.0.0.1:{{service_port}}:5000'
+    depends_on:
+      - mongodb
+    environment:
+      - SECRETS_DIR=/opt/secrets
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGO_DB_NAME=auth487
+      - AUTH_BASE_URL=https://{{ http_domain }}
+      - AUTH_DOMAIN={{ auth_domain }}
+      - AUTH_PRIVATE_KEY_FILE=/opt/secrets/auth_info/auth_key.pem
+      - AUTH_PUBLIC_KEY_FILE=/opt/secrets/auth_info/auth_key.pub.pem
+      - AUTH_INFO_FILE=/opt/secrets/auth_info/auth_info.json
+      - NOTIFICATION_EMAIL_FROM={{ notification_from }}
+      - NOTIFICATION_EMAIL_TO={{ notification_to }}
+      - GMAIL_CREDENTIALS_FILE=/opt/secrets/gmail_sender/gmail_credentials.json
+  mongodb:
+    restart: always
+    user: root
+    image: 'docker.io/mongodb/mongodb-community-server:4.4-ubuntu2004'
+    volumes:
+      - /data/db:/data/db:rw

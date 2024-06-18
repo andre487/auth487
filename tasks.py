@@ -1,4 +1,5 @@
 # flake8: noqa F402
+import logging
 import os
 import sys
 
@@ -158,4 +159,11 @@ def make_deploy(c, recreate_venv=False):
     cli_tasks.docker_test.run(c, recreate_venv)
     cli_tasks.docker_push.run(c)
 
-    sp.check_call(('ansible-playbook', f'{common.PROJECT_DIR}/deploy/setup.yml'))
+    c.run(f'ansible-playbook -v {common.PROJECT_DIR}/deploy/setup.yml', pty=True, env={
+        'APP_DOCKER_IMAGE': common.DOCKER_IMAGE_NAME,
+    })
+
+    try:
+        c.run('docker-clean')
+    except Exception as e:
+        logging.warning(e)

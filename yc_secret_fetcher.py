@@ -18,7 +18,6 @@ op_dev_run = click.option('--dev-run', is_flag=True)
 
 SECRETS = {
     'auth_info': 'e6q6vfo2vo565h0cb0nq',
-    'mongo': 'e6qi9pel32r3mjoks1bj',
     'gmail_sender': 'e6qar6a7mkjfu29vpv7b',
 }
 
@@ -121,8 +120,12 @@ def request_lockbox(iam_token: str, sec_id: str) -> dict[str, bytes]:
         headers={'Authorization': f'Bearer {iam_token}'},
     )
 
-    with urllib.request.urlopen(req) as resp:
-        resp_data = json.loads(resp.read())
+    try:
+        with urllib.request.urlopen(req) as resp:
+            resp_data = json.loads(resp.read())
+    except urllib.request.HTTPError as e:
+        logging.error('Secret %s error: %s', sec_id, e.read().decode('utf8', errors='backslashreplace'))
+        raise Exception(f'Secret retrieving error: {e}') from None
 
     sec_data = {}
     for cur_data in resp_data['entries']:

@@ -17,4 +17,4 @@ export YC_SECRET_RUN_ARG
 
 ./yc_secret_fetcher.py once --secrets-dir "$SECRETS_DIR" "${YC_SECRET_RUN_ARG[@]}"
 
-supervisord --configuration conf/supervisord.conf
+exec supervisord --configuration conf/supervisord.conf

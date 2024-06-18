@@ -6,6 +6,7 @@
   vars:
     container_name: auth487
     network_name: auth487_net
+    app_docker_image: "{{ lookup('ansible.builtin.env', 'APP_DOCKER_IMAGE') }}"
 
   tasks:
     - name: Check SSL certificates
@@ -68,57 +69,41 @@
         state: reloaded
       when: config_res.changed or certificate_res.changed
 
-    - name: Create docker network for service
-      community.general.docker_network:
-        name: '{{ network_name }}'
-        state: present
-        internal: yes
-        driver: bridge
-      register: docker_network
+    - name: Create app dir
+      file:
+        path: /opt/app
+        state: directory
 
-    - name: Update image
-      community.general.docker_image:
-        name: 'andre487/{{ container_name }}'
-        source: pull
-        force_source: yes
-      register: docker_image
+    - name: Create data dir
+      file:
+        path: /data/db
+        state: directory
 
-    - name: Stop and remove container
-      community.general.docker_container:
-        name: '{{ container_name }}'
-        state: absent
-        container_default_behavior: no_defaults
-      when: docker_network.changed or docker_image.changed
+    - name: Setup docker compose config
+      template:
+        src: provision/docker-compose.yml.j2
+        dest: /opt/app/docker-compose.yml
 
-    - name: Start container
-      community.general.docker_container:
-        name: '{{ container_name }}'
-        image: 'andre487/{{ container_name }}'
-        state: started
-        container_default_behavior: no_defaults
-        detach: yes
-        restart_policy: always
-        networks_cli_compatible: no
-        networks:
-          - name: '{{ network_name }}'
-        ports:
-          - '127.0.0.1:{{ service_port }}:5000'
-        env:
-          SECRETS_DIR: /opt/secrets
-          MONGO_HOST: /opt/secrets/mongo/host
-          MONGO_PORT: /opt/secrets/mongo/port
-          MONGO_REPLICA_SET: /opt/secrets/mongo/replica_set
-          MONGO_SSL_CERT: /opt/secrets/mongo/ssl_cert
-          MONGO_USER: /opt/secrets/mongo/user
-          MONGO_PASSWORD: /opt/secrets/mongo/password
-          MONGO_AUTH_SOURCE: /opt/secrets/mongo/auth_source
-          MONGO_DB_NAME: auth487
-          AUTH_BASE_URL: 'https://{{ http_domain }}'
-          AUTH_DOMAIN: '{{ auth_domain }}'
-          AUTH_PRIVATE_KEY_FILE: /opt/secrets/auth_info/auth_key.pem
-          AUTH_PUBLIC_KEY_FILE: /opt/secrets/auth_info/auth_key.pub.pem
-          AUTH_INFO_FILE: /opt/secrets/auth_info/auth_info.json
-          NOTIFICATION_EMAIL_FROM: '{{ notification_from }}'
-          NOTIFICATION_EMAIL_TO: '{{ notification_to }}'
-          GMAIL_CREDENTIALS_FILE: /opt/secrets/gmail_sender/gmail_credentials.json
-      when: docker_network.changed or docker_image.changed
+    - name: Setup Docker images cleanup script
+      copy:
+        src: provision/cleanup_docker_images.sh
+        dest: /opt/app/cleanup_docker_images.sh
+        mode: 0755
+
+    - name: Run app
+      shell:
+        executable: /bin/bash
+        cmd: |
+          set -eo pipefail
+          docker compose pull
+          docker compose stop || true
+          docker compose up --detach --remove-orphans --wait
+        chdir: /opt/app
+
+    - name: Cleanup images
+      shell:
+        cmd: /opt/app/cleanup_docker_images.sh
+
+    - name: Docker clean
+      shell:
+        cmd: docker-clean
