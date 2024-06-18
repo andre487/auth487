@@ -209,7 +209,7 @@ def robots_txt():
 
 
 @app.errorhandler(werkzeug.exceptions.HTTPException)
-def error_page(e: werkzeug.exceptions.HTTPException):
+def error_page_http(e: werkzeug.exceptions.HTTPException):
     err_msg = f'{e.code} {type(e).__name__}'
     return make_template_response(
         'error.html',
@@ -222,7 +222,7 @@ def error_page(e: werkzeug.exceptions.HTTPException):
 
 
 @app.errorhandler(Exception)
-def error_page(e: Exception):
+def error_page_exc(e: Exception):
     err_code = 500
     err_msg = f'{err_code} Internal Server Error'
     return make_template_response(
@@ -236,7 +236,8 @@ def error_page(e: Exception):
 
 
 def make_template_response(template, **kwargs):
-    resp = make_response(**kwargs)
+    code = kwargs.pop('code', 200)
+    resp = make_response(code=code, **kwargs)
 
     if 'base_resp' in kwargs:
         del kwargs['base_resp']
@@ -256,9 +257,9 @@ def make_json_response(data, **kwargs):
     return make_response(resp, **kwargs)
 
 
-def make_response(base_resp=None, http_headers=None, **_):
+def make_response(base_resp=None, http_headers=None, code=200, **_):
     if not base_resp:
-        base_resp = flask.Response()
+        base_resp = flask.Response(status=code)
 
     for name, val in ADDITIONAL_HEADERS.items():
         base_resp.headers[name] = val

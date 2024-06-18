@@ -147,7 +147,7 @@ class TestLoginPage:
         assert res.status_code == 405
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
 
-        assert '<title>405 Method Not Allowed</title>' in res.text
+        assert '<title>405 MethodNotAllowed</title>' in res.text
 
 
 class TestOtpPage:
@@ -310,7 +310,7 @@ class TestOtpPage:
         assert res.status_code == 405
         assert res.headers['content-type'] == 'text/html; charset=utf-8'
 
-        assert '<title>405 Method Not Allowed</title>' in res.text
+        assert '<title>405 MethodNotAllowed</title>' in res.text
 
     def _log_in(self, login='test'):
         res = make_app_request('/login', method='POST', cookies={
