@@ -1,109 +1,24 @@
 - hosts: auth487
-  remote_user: '{{ remote_user }}'
-  become: True
+  become: true
   become_method: sudo
 
   vars:
-    container_name: auth487
-    network_name: auth487_net
     app_docker_image: "{{ lookup('ansible.builtin.env', 'APP_DOCKER_IMAGE') }}"
+    internal_port: 5000
+    project_environment:
+      - SECRETS_DIR=/opt/secrets
+      - MONGO_HOST=mongodb
+      - MONGO_PORT=27017
+      - MONGO_DB_NAME=auth487
+      - AUTH_BASE_URL=https://{{ http_domain }}
+      - AUTH_DOMAIN={{ auth_domain }}
+      - AUTH_PRIVATE_KEY_FILE=/opt/secrets/auth_info/auth_key.pem
+      - AUTH_PUBLIC_KEY_FILE=/opt/secrets/auth_info/auth_key.pub.pem
+      - AUTH_INFO_FILE=/opt/secrets/auth_info/auth_info.json
+      - NOTIFICATION_EMAIL_FROM={{ notification_from }}
+      - NOTIFICATION_EMAIL_TO={{ notification_to }}
+      - GMAIL_CREDENTIALS_FILE=/opt/secrets/gmail_sender/gmail_credentials.json
 
-  tasks:
-    - name: Check SSL certificates
-      stat:
-        path: /etc/letsencrypt/live/{{ http_domain }}
-      register: nginx_ssl_result
-
-    - name: Setup NGINX no SSL host config
-      template:
-        src: provision/nginx-no-ssl.conf.j2
-        dest: /etc/nginx/sites-available/{{ container_name }}.conf
-      when: nginx_ssl_result.stat.exists == False
-      register: no_ssl_config_res
-
-    - name: Enable NGINX host config
-      file:
-        state: link
-        src: /etc/nginx/sites-available/{{ container_name }}.conf
-        dest: /etc/nginx/sites-enabled/{{ container_name }}.conf
-      when: no_ssl_config_res.changed
-
-    - name: Reload NGINX
-      service:
-        name: nginx
-        state: reloaded
-      when: no_ssl_config_res.changed
-
-    - name: Install certificate
-      shell: |
-        certbot --nginx \
-          -d {{ http_domain }} \
-          -n \
-          --agree-tos \
-          -m '{{ cert_email }}'
-      when: nginx_ssl_result.stat.exists == False
-      register: certificate_res
-
-    - name: Create web root
-      file:
-        dest: /var/www/{{ http_domain }}
-        state: directory
-        owner: www-data
-        group: www-data
-
-    - name: Setup NGINX host config
-      template:
-        src: provision/nginx.conf.j2
-        dest: /etc/nginx/sites-available/{{ container_name }}.conf
-      register: config_res
-
-    - name: Enable NGINX host config
-      file:
-        state: link
-        src: /etc/nginx/sites-available/{{ container_name }}.conf
-        dest: /etc/nginx/sites-enabled/{{ container_name }}.conf
-
-    - name: Reload NGINX
-      service:
-        name: nginx
-        state: reloaded
-      when: config_res.changed or certificate_res.changed
-
-    - name: Create app dir
-      file:
-        path: /opt/app
-        state: directory
-
-    - name: Create data dir
-      file:
-        path: /data/db
-        state: directory
-
-    - name: Setup docker compose config
-      template:
-        src: provision/docker-compose.yml.j2
-        dest: /opt/app/docker-compose.yml
-
-    - name: Setup Docker images cleanup script
-      copy:
-        src: provision/cleanup_docker_images.sh
-        dest: /opt/app/cleanup_docker_images.sh
-        mode: 0755
-
-    - name: Run app
-      shell:
-        executable: /bin/bash
-        cmd: |
-          set -eo pipefail
-          docker compose pull
-          docker compose stop || true
-          docker compose up --detach --remove-orphans --wait
-        chdir: /opt/app
-
-    - name: Cleanup images
-      shell:
-        cmd: /opt/app/cleanup_docker_images.sh
-
-    - name: Docker clean
-      shell:
-        cmd: docker-clean
+  roles:
+    - https-site
+    - docker-compose-project

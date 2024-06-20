@@ -149,14 +149,16 @@ def create_local_venv(c):
 
 
 @task
-def make_deploy(c, recreate_venv=False):
+def make_deploy(c, recreate_venv=False, no_lint=False, no_test=False):
     """Deploy current work dir to production"""
-    cli_tasks.run_linters.run(c, recreate_venv)
+    if not no_lint:
+        cli_tasks.run_linters.run(c, recreate_venv)
 
     cli_tasks.prepare_secrets.run(c, recreate_venv)
 
     cli_tasks.docker_build.run(c)
-    cli_tasks.docker_test.run(c, recreate_venv)
+    if not no_test:
+        cli_tasks.docker_test.run(c, recreate_venv)
     cli_tasks.docker_push.run(c)
 
     c.run(f'ansible-playbook -v {common.PROJECT_DIR}/deploy/setup.yml', pty=True, env={

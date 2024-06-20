@@ -1,0 +1,3 @@
+[submodule "deploy/infrastructure"]
+	path = deploy/infrastructure
+	url = https://github.com/andre487/infrastructure
